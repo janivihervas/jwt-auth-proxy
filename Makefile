@@ -2,6 +2,7 @@ SHELL := /bin/bash
 MAKEFLAGS += --no-print-directory --output-sync
 
 BINARY := jwt-auth-proxy
+CMD := github.com/janivihervas/$(BINARY)/cmd/$(BINARY)
 VERSION ?= $(shell git rev-parse HEAD)
 
 GO_FILES_NO_TEST := $(shell find . -name "*.go" -not -path "./bin/*" -not -path ".git/*" -not -name "*_test.go")
@@ -71,7 +72,7 @@ arch = $(word 2, $(parts))
 .PRECIOUS: bin/$(BINARY).$(VERSION).%/$(BINARY)
 bin/$(BINARY).$(VERSION).%/$(BINARY): $(GO_FILES_NO_TEST)
 	@mkdir -p bin
-	CGO_ENABLED=0 GOOS=$(os) GOARCH=$(arch) go build -installsuffix cgo -o $@
+	CGO_ENABLED=0 GOOS=$(os) GOARCH=$(arch) go build -installsuffix cgo -o $@ $(CMD)
 
 bin/$(BINARY).$(VERSION).%.tar.gz: bin/$(BINARY).$(VERSION).%/$(BINARY)
 	tar -zcvf $@ --directory="bin" $(subst .tar.gz,,$(notdir $@))
@@ -79,14 +80,14 @@ bin/$(BINARY).$(VERSION).%.tar.gz: bin/$(BINARY).$(VERSION).%/$(BINARY)
 .PRECIOUS: bin/$(BINARY).$(VERSION).windows-%/$(BINARY).exe
 bin/$(BINARY).$(VERSION).windows-%/$(BINARY).exe: $(GO_FILES_NO_TEST)
 	@mkdir -p bin
-	CGO_ENABLED=0 GOOS=windows GOARCH=$* go build -installsuffix cgo -o $@
+	CGO_ENABLED=0 GOOS=windows GOARCH=$* go build -installsuffix cgo -o $@ $(CMD)
 
 bin/$(BINARY).$(VERSION).windows-%.tar.gz: bin/$(BINARY).$(VERSION).windows-%/$(BINARY).exe
 	tar -zcvf $@ --directory="bin" $(subst .tar.gz,,$(notdir $@))
 
 .PHONY: build
 build:
-	go install
+	go install $(CMD)
 	@$(MAKE) -j \
 	bin/$(BINARY).$(VERSION).linux-amd64/$(BINARY) \
 	bin/$(BINARY).$(VERSION).darwin-amd64/$(BINARY) \
