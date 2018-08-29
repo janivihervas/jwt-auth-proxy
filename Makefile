@@ -52,6 +52,11 @@ lint:
 test:
 	go test -race -cover ./...
 
+.PHONY: test-codecov
+test-codecov:
+	go test -race -coverprofile=coverage.out -covermode=atomic ./...
+	bash <(curl -s https://codecov.io/bash)
+
 parts = $(subst -, ,$*)
 os = $(word 1, $(parts))
 arch = $(word 2, $(parts))

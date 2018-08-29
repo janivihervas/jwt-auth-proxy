@@ -1,6 +1,7 @@
 # jwt-auth-proxy
 
 [![CircleCI](https://circleci.com/gh/janivihervas/jwt-auth-proxy.svg?style=svg)](https://circleci.com/gh/janivihervas/jwt-auth-proxy)
+[![codecov](https://codecov.io/gh/janivihervas/jwt-auth-proxy/branch/master/graph/badge.svg)](https://codecov.io/gh/janivihervas/jwt-auth-proxy)
 
 [![Go Report Card](https://goreportcard.com/badge/github.com/janivihervas/jwt-auth-proxy)](https://goreportcard.com/report/github.com/janivihervas/jwt-auth-proxy)
 [![GoDoc](https://godoc.org/github.com/janivihervas/jwt-auth-proxy?status.svg)](https://godoc.org/github.com/janivihervas/jwt-auth-proxy)

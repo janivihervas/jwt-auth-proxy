@@ -46,7 +46,8 @@ jobs:
               fi
             fi
       - run: make lint
-      - run: make test
+      - run: make test-codecov
+      - run: make release
       - run:
           name: Push autobot changes
           command: |
