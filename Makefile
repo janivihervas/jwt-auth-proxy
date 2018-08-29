@@ -12,6 +12,13 @@ GO_TOOLS := golang.org/x/tools/cmd/goimports \
             github.com/alexkohler/nakedret \
             mvdan.cc/interfacer
 
+.PHONY: all
+all: build
+
+.PHONY: clean
+clean:
+	@rm -rf bin
+
 .PHONY: install
 install:
 	go get ./...
