@@ -14,9 +14,8 @@ import (
 )
 
 func TestEcho_ServeHTTP(t *testing.T) {
-	echoAsserts := func(t *testing.T, w *httptest.ResponseRecorder, r *http.Request) {
+	test := func(t *testing.T, w *httptest.ResponseRecorder, r *http.Request) {
 		t.Helper()
-		t.Name()
 
 		assert.Equal(t, http.StatusOK, w.Result().StatusCode)
 
@@ -35,20 +34,19 @@ func TestEcho_ServeHTTP(t *testing.T) {
 
 		echo.ServeHTTP(w, r)
 
-		echoAsserts(t, w, r)
+		test(t, w, r)
 	})
 
 	t.Run("With query", func(t *testing.T) {
 		w := httptest.NewRecorder()
 		q := url.Values{
 			"foo": []string{"bar"},
-			"bar": []string{"foo"},
 		}.Encode()
 		r := httptest.NewRequest(http.MethodGet, "/queries?"+q, nil)
 
 		echo.ServeHTTP(w, r)
 
-		echoAsserts(t, w, r)
+		test(t, w, r)
 	})
 
 	t.Run("With headers", func(t *testing.T) {
@@ -56,12 +54,24 @@ func TestEcho_ServeHTTP(t *testing.T) {
 		r := httptest.NewRequest(http.MethodGet, "/headers", nil)
 		h := make(http.Header)
 		h.Add("foo", "bar")
-		h.Add("bar", "foo")
 		r.Header = h
 
 		echo.ServeHTTP(w, r)
 
-		echoAsserts(t, w, r)
+		test(t, w, r)
+	})
+
+	t.Run("With cookies", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest(http.MethodGet, "/headers", nil)
+		r.AddCookie(&http.Cookie{
+			Name:  "foo",
+			Value: "bar",
+		})
+
+		echo.ServeHTTP(w, r)
+
+		test(t, w, r)
 	})
 
 	t.Run("With body", func(t *testing.T) {
@@ -70,6 +80,6 @@ func TestEcho_ServeHTTP(t *testing.T) {
 
 		echo.ServeHTTP(w, r)
 
-		echoAsserts(t, w, r)
+		test(t, w, r)
 	})
 }
