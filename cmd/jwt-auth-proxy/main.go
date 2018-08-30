@@ -1,12 +1,13 @@
 package main
 
-import "fmt"
+import (
+	"log"
+	"net/http"
+
+	"github.com/janivihervas/jwt-auth-proxy/pkg/http/upstream"
+)
 
 func main() {
-	fmt.Println(Hello())
-}
-
-// Hello returns Hello World!
-func Hello() string {
-	return "Hello world!"
+	log.Println("Starting echo server...")
+	log.Fatal(http.ListenAndServe("127.0.0.1:3000", upstream.Echo{}))
 }
