@@ -1,0 +1,7 @@
+Method: GET
+Path: /headers
+
+Headers:
+  Foo: bar
+  Bar: foo
+
