@@ -1,13 +1,16 @@
 package main
 
 import (
-	"log"
-	"net/http"
+	"os"
+
+	"github.com/janivihervas/jwt-auth-proxy/pkg/http/server"
 
 	"github.com/janivihervas/jwt-auth-proxy/pkg/http/upstream"
 )
 
 func main() {
-	log.Println("Starting echo server...")
-	log.Fatal(http.ListenAndServe("127.0.0.1:3000", upstream.Echo{}))
+	err := server.RunHTTP(os.Getenv("PORT"), upstream.Echo{})
+	if err != nil {
+		panic(err)
+	}
 }
