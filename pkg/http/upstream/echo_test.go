@@ -9,11 +9,19 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/janivihervas/cupaloy"
+	"github.com/bradleyjkemp/cupaloy"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestEcho_ServeHTTP(t *testing.T) {
+	cupaloy := cupaloy.New(
+		cupaloy.CreateNewAutomatically(true),
+		cupaloy.FailOnUpdate(false),
+		cupaloy.ShouldUpdate(func() bool {
+			return true
+		}),
+	)
+
 	test := func(t *testing.T, w *httptest.ResponseRecorder, r *http.Request) {
 		t.Helper()
 

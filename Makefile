@@ -58,7 +58,7 @@ lint:
 
 .PHONY: test
 test:
-	UPDATE_SNAPSHOTS=true go test -race -cover ./...
+	go test -race -cover ./...
 
 .PHONY: test-codecov
 test-codecov:
