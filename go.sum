@@ -1,7 +1,5 @@
 github.com/alexkohler/nakedret v0.0.0-20171106223215-c0e305a4f690 h1:+tfdYWf4oDrj9c0/77f5oDBxZT2EPjS1AJf+PApGNCk=
 github.com/alexkohler/nakedret v0.0.0-20171106223215-c0e305a4f690/go.mod h1:tfDQbtPt67HhBK/6P0yNktIX7peCxfOp0jO9007DrLE=
-github.com/bradleyjkemp/cupaloy v2.2.0+incompatible h1:Ed7uOEn/o3DIox3PV//SmtXnNO9yPZDdP9wZ0bdcEtI=
-github.com/bradleyjkemp/cupaloy v2.2.0+incompatible/go.mod h1:Au1Xw1sgaJ5iSFktEhYsS0dbQiS1B0/XMXl+42y9Ilk=
 github.com/bradleyjkemp/cupaloy v2.2.1-0.20180920191157-5859e8d52a06+incompatible h1:I/CEH6qMReVxDzVkjrUiLJke4r/KVO2lFIdnCpM1AXY=
 github.com/bradleyjkemp/cupaloy v2.2.1-0.20180920191157-5859e8d52a06+incompatible/go.mod h1:Au1Xw1sgaJ5iSFktEhYsS0dbQiS1B0/XMXl+42y9Ilk=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
@@ -10,8 +8,6 @@ github.com/fzipp/gocyclo v0.0.0-20150627053110-6acd4345c835 h1:roDmqJ4Qes7hrDOsW
 github.com/fzipp/gocyclo v0.0.0-20150627053110-6acd4345c835/go.mod h1:BjL/N0+C+j9uNX+1xcNuM9vdSIcXCZrQZUYbXOFbgN8=
 github.com/golang/lint v0.0.0-20180702182130-06c8688daad7 h1:2hRPrmiwPrp3fQX967rNJIhQPtiGXdlQWAxKbKw3VHA=
 github.com/golang/lint v0.0.0-20180702182130-06c8688daad7/go.mod h1:tluoj9z5200jBnyusfRPU2LqT6J+DAorxEvtC7LHB+E=
-github.com/janivihervas/cupaloy v2.2.1-0.20180830155849-dde843bd7174+incompatible h1:SSVWOtpMMOkqy64kgy3BA1XcyJtB03z/IDZJ2pMGozA=
-github.com/janivihervas/cupaloy v2.2.1-0.20180830155849-dde843bd7174+incompatible/go.mod h1:/B7RNsxWwpQqa7VEG2BLz75wEWHO9Rvft0ptVBqHFTo=
 github.com/kisielk/errcheck v1.1.0 h1:ZqfnKyx9KGpRcW04j5nnPDgRgoXUeLh2YFBeFzphcA0=
 github.com/kisielk/errcheck v1.1.0/go.mod h1:EZBBE59ingxPouuu3KfxchcWSUPOHkagtvWXihfKN4Q=
 github.com/kisielk/gotool v1.0.0 h1:AV2c/EiW3KqPNT9ZKl07ehoAGi4C5/01Cfbblndcapg=
@@ -23,9 +19,9 @@ github.com/stretchr/testify v1.2.2/go.mod h1:a8OnRcib4nhh0OaRAV+Yts87kKdq0PP7pXf
 golang.org/x/lint v0.0.0-20180702182130-06c8688daad7 h1:00BeQWmeaGazuOrq8Q5K5d3/cHaGuFrZzpaHBXfrsUA=
 golang.org/x/lint v0.0.0-20180702182130-06c8688daad7/go.mod h1:UVdnD1Gm6xHRNCYTkRU2/jEulfH38KcIWyp/GAMgvoE=
 golang.org/x/tools v0.0.0-20180221164845-07fd8470d635/go.mod h1:n7NCudcB/nEzxVGmLbDWY5pfWTLqBcC2KZ6jyYvM4mQ=
-golang.org/x/tools v0.0.0-20180830214440-4bc20fc7916b h1:3IVR/5kQ+E0RFgfWhLaLA5LkTE8fF9EWQ+poI/8UDxc=
-golang.org/x/tools v0.0.0-20180830214440-4bc20fc7916b/go.mod h1:n7NCudcB/nEzxVGmLbDWY5pfWTLqBcC2KZ6jyYvM4mQ=
-mvdan.cc/interfacer v0.0.0-20180326104626-822e100dd73a h1:BdF4B1NgxIhmqSzfc0aikOU3WlPCFyUQ4JFHMTV0sCQ=
-mvdan.cc/interfacer v0.0.0-20180326104626-822e100dd73a/go.mod h1:Xkxe497xwlCKkIaQYRfC7CSLworTXY9RMqwhhCm+8Nc=
+golang.org/x/tools v0.0.0-20181004163742-59602fdee893 h1:rsE8bdRd+SQZ1eQSuWpO3bw7AmfVa+vsnxkZ9tcPzAA=
+golang.org/x/tools v0.0.0-20181004163742-59602fdee893/go.mod h1:n7NCudcB/nEzxVGmLbDWY5pfWTLqBcC2KZ6jyYvM4mQ=
+mvdan.cc/interfacer v0.0.0-20180901003855-c20040233aed h1:WX1yoOaKQfddO/mLzdV4wptyWgoH/6hwLs7QHTixo0I=
+mvdan.cc/interfacer v0.0.0-20180901003855-c20040233aed/go.mod h1:Xkxe497xwlCKkIaQYRfC7CSLworTXY9RMqwhhCm+8Nc=
 mvdan.cc/lint v0.0.0-20170908181259-adc824a0674b h1:DxJ5nJdkhDlLok9K6qO+5290kphDJbHOQO1DFFFTeBo=
 mvdan.cc/lint v0.0.0-20170908181259-adc824a0674b/go.mod h1:2odslEg/xrtNQqCYg2/jCoyKnw3vv5biOc3JnIcYfL4=
