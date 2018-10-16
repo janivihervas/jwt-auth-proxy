@@ -7,7 +7,7 @@ VERSION ?= $(shell git rev-parse HEAD)
 
 GO_FILES_NO_TEST := $(shell find . -name "*.go" -not -path "./bin/*" -not -path ".git/*" -not -name "*_test.go")
 GO_TOOLS := golang.org/x/tools/cmd/goimports \
-            github.com/golang/lint/golint \
+            golang.org/x/lint/golint \
             github.com/fzipp/gocyclo \
             github.com/kisielk/errcheck \
             github.com/alexkohler/nakedret
