@@ -8,7 +8,7 @@ machine:
 jobs:
   build:
     docker:
-      - image: circleci/golang:1.11.1
+      - image: circleci/golang:1.11.2
     steps:
       - checkout
       - run:
@@ -23,15 +23,13 @@ jobs:
       - run:
           name: Install
           command: |
-            go mod tidy
-            make install setup
+            make update
             if [[ $CIRCLE_BRANCH != "master" ]]; then
               if [[ $(git status --porcelain) ]]; then
                 git add --all
                 git commit -m "AUTOBOT: Install"
               fi
             fi
-            go mod verify
       - save_cache:
           key: v1-deps-{{ arch }}-{{ checksum "go.mod" }}
           paths:
