@@ -80,5 +80,7 @@ func (m *middleware) authorizeCallback(w http.ResponseWriter, r *http.Request) {
 
 	http.SetCookie(w, createAccessTokenCookie(tokens.AccessToken))
 
-	// TODO: What now? Redirect to somewhere
+	// TODO: Redirect to original url from session
+
+	http.Redirect(w, r, "http://localhost:3000", http.StatusSeeOther)
 }
