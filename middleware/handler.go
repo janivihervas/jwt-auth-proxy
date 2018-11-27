@@ -13,13 +13,7 @@ func (m *middleware) defaultHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	accessToken, err := jwt.ParseAccessToken(accessTokenStr)
-	if err != nil {
-		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
-		return
-	}
-
-	err = accessToken.Valid()
+	_, err = jwt.ParseAccessToken(accessTokenStr)
 	if err == jwt.ErrTokenExpired {
 		err = m.refreshAccessToken(w, r)
 		if err != nil {
