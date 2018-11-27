@@ -3,9 +3,9 @@ package main
 import (
 	"os"
 
-	"github.com/janivihervas/jwt-auth-proxy/pkg/http/server"
+	"github.com/janivihervas/oidc-go/pkg/http/server"
 
-	"github.com/janivihervas/jwt-auth-proxy/pkg/http/upstream"
+	"github.com/janivihervas/oidc-go/pkg/http/upstream"
 )
 
 func main() {

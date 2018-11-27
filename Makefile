@@ -1,7 +1,7 @@
 SHELL := /bin/bash
 MAKEFLAGS += --no-print-directory --output-sync
 
-BINARY := jwt-auth-proxy
+BINARY := oidc-go
 CMD := github.com/janivihervas/$(BINARY)/cmd/$(BINARY)
 VERSION ?= $(shell git rev-parse HEAD)
 

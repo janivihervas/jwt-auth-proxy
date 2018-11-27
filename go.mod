@@ -1,4 +1,4 @@
-module github.com/janivihervas/jwt-auth-proxy
+module github.com/janivihervas/oidc-go
 
 require (
 	github.com/alexkohler/nakedret v0.0.0-20171106223215-c0e305a4f690 // indirect
