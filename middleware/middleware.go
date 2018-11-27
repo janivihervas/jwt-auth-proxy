@@ -6,7 +6,7 @@ import (
 
 	"github.com/gorilla/securecookie"
 
-	"github.com/janivihervas/jwt-auth-proxy"
+	"github.com/janivihervas/oidc-go"
 )
 
 const (

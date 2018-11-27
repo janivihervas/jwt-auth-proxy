@@ -3,14 +3,14 @@ package main
 import (
 	"os"
 
-	"github.com/janivihervas/jwt-auth-proxy"
-	"github.com/janivihervas/jwt-auth-proxy/azure"
+	"github.com/janivihervas/oidc-go"
+	"github.com/janivihervas/oidc-go/azure"
 
-	"github.com/janivihervas/jwt-auth-proxy/middleware"
+	"github.com/janivihervas/oidc-go/middleware"
 
-	"github.com/janivihervas/jwt-auth-proxy/internal/http/server"
+	"github.com/janivihervas/oidc-go/internal/http/server"
 
-	"github.com/janivihervas/jwt-auth-proxy/internal/http/upstream"
+	"github.com/janivihervas/oidc-go/internal/http/upstream"
 
 	"github.com/kelseyhightower/envconfig"
 	"github.com/subosito/gotenv"

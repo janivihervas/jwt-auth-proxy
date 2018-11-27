@@ -1,7 +1,7 @@
 package azure
 
 import (
-	"github.com/janivihervas/jwt-auth-proxy"
+	"github.com/janivihervas/oidc-go"
 )
 
 // Endpoint will return Azure AD endpoint configuration for a given tenant id

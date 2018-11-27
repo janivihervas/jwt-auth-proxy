@@ -5,7 +5,7 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/janivihervas/jwt-auth-proxy"
+	"github.com/janivihervas/oidc-go"
 )
 
 func (m *middleware) session(r *http.Request) ([]byte, oidc.Session, error) {

@@ -9,9 +9,9 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/janivihervas/jwt-auth-proxy/internal/mock"
+	"github.com/janivihervas/oidc-go/internal/mock"
 
-	"github.com/janivihervas/jwt-auth-proxy/internal/http/upstream"
+	"github.com/janivihervas/oidc-go/internal/http/upstream"
 )
 
 func TestNewWithMockRedirect(t *testing.T) {

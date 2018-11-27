@@ -3,7 +3,7 @@ package middleware
 import (
 	"net/http"
 
-	"github.com/janivihervas/jwt-auth-proxy/jwt"
+	"github.com/janivihervas/oidc-go/jwt"
 )
 
 func (m *middleware) defaultHandler(w http.ResponseWriter, r *http.Request) {
