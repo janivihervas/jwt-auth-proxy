@@ -1,6 +1,9 @@
 package oidc
 
-import "net/url"
+import (
+	"net/url"
+	"strings"
+)
 
 func (c Client) AuthenticationRequestURL(responseMode string, state string) string {
 	return c.Endpoint.AuthURL + "?" + url.Values{
@@ -8,7 +11,7 @@ func (c Client) AuthenticationRequestURL(responseMode string, state string) stri
 		"response_type": []string{"code"},
 		"redirect_uri":  []string{c.RedirectURL},
 		"response_mode": []string{responseMode},
-		"scope":         c.Scope,
+		"scope":         []string{strings.Join(c.Scope, " ")},
 		"state":         []string{state},
 	}.Encode()
 }

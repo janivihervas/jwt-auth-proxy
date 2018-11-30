@@ -28,12 +28,8 @@ func (m *middleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	m.mux.ServeHTTP(w, r)
 }
 
-func (m *middleware) refreshAccessToken(writer http.ResponseWriter, r *http.Request) error {
-	return nil
-}
-
 // New ...
-func New(client oidc.Client, next http.Handler) http.Handler {
+func New(client oidc.Client, sessionStorage oidc.SessionStorage, next http.Handler) http.Handler {
 	mux := http.NewServeMux()
 	m := &middleware{
 		mux:    mux,
@@ -43,12 +39,11 @@ func New(client oidc.Client, next http.Handler) http.Handler {
 			[]byte(strings.Repeat("x", 32)),
 			[]byte(strings.Repeat("y", 32)),
 		),
-		next: next,
+		next:           next,
+		sessionStorage: sessionStorage,
 	}
 	mux.HandleFunc("/oauth2/callback", m.authorizeCallback)
+	mux.HandleFunc("/", m.defaultHandler)
 
-	mux.HandleFunc("/", func(writer http.ResponseWriter, r *http.Request) {
-
-	})
 	return m
 }

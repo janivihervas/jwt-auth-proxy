@@ -3,6 +3,8 @@ package main
 import (
 	"os"
 
+	"github.com/janivihervas/oidc-go/internal/storage"
+
 	"github.com/janivihervas/oidc-go"
 	"github.com/janivihervas/oidc-go/azure"
 
@@ -37,7 +39,10 @@ func main() {
 		Endpoint:     azure.Endpoint(config.AzureTenant),
 		RedirectURL:  "http://localhost:3000/oauth2/callback",
 		Scope:        []string{oidc.ScopeOpenID, oidc.ScopeOfflineAccess},
-	}, upstream.Echo{})
+	},
+		storage.NewMemory(),
+		upstream.Echo{},
+	)
 
 	err = server.RunHTTP(os.Getenv("PORT"), m)
 	if err != nil {

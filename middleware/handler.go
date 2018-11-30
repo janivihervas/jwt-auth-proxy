@@ -1,15 +1,25 @@
 package middleware
 
 import (
+	"log"
 	"net/http"
+	"net/http/httputil"
+
+	"github.com/janivihervas/oidc-go/internal/random"
+
+	"github.com/janivihervas/oidc-go"
 
 	"github.com/janivihervas/oidc-go/jwt"
 )
 
 func (m *middleware) defaultHandler(w http.ResponseWriter, r *http.Request) {
+	log.Println("default")
+	b, _ := httputil.DumpRequest(r, true)
+	log.Println(string(b))
+
 	accessTokenStr, err := extractAccessToken(r)
 	if err != nil {
-		http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
+		m.redirectToLogin(w, r)
 		return
 	}
 
@@ -32,6 +42,7 @@ func (m *middleware) defaultHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (m *middleware) authorizeCallback(w http.ResponseWriter, r *http.Request) {
+	log.Println("authorize callback")
 	if r.Method != http.MethodPost {
 		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
 		return
@@ -83,4 +94,30 @@ func (m *middleware) authorizeCallback(w http.ResponseWriter, r *http.Request) {
 	// TODO: Redirect to original url from session
 
 	http.Redirect(w, r, "http://localhost:3000", http.StatusSeeOther)
+}
+
+func (m *middleware) redirectToLogin(w http.ResponseWriter, r *http.Request) {
+	log.Println("redirect to login")
+	state := string(random.String(32))
+	sessionID, session, err := m.session(r)
+	if err != nil {
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	session.State = state
+	err = m.sessionStorage.Save(r.Context(), sessionID, session)
+	if err != nil {
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	http.SetCookie(w, createSessionCookie(sessionID))
+
+	url := m.client.AuthenticationRequestURL(oidc.ResponseModeFormPost, state)
+	http.Redirect(w, r, url, http.StatusSeeOther)
+}
+
+func (m *middleware) refreshAccessToken(writer http.ResponseWriter, r *http.Request) error {
+	return nil
 }
