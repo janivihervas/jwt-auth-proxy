@@ -1,6 +1,9 @@
 package jwt
 
-import "errors"
+import (
+	"context"
+	"errors"
+)
 
 var (
 	ErrTokenExpired = errors.New("oidc: token is expired")
@@ -17,7 +20,10 @@ type Token interface {
 	Valid() error
 }
 
-func ParseAccessToken(accessTokenStr string) (AccessToken, error) {
+func ParseAccessToken(ctx context.Context, accessTokenStr string) (AccessToken, error) {
 	// TODO
+	if accessTokenStr == "" {
+		return AccessToken{}, errors.New("empty")
+	}
 	return AccessToken{}, nil
 }

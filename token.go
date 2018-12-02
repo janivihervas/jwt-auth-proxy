@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/url"
+	"strings"
 
 	"github.com/pkg/errors"
 )
@@ -22,7 +23,7 @@ func (c Client) TokenRequest(ctx context.Context, code string) (TokenResponse, e
 		"grant_type":    []string{"authorization_code"},
 		"code":          []string{code},
 		"redirect_uri":  []string{c.RedirectURL},
-		"scope":         c.Scope,
+		"scope":         []string{strings.Join(c.Scope, " ")},
 	}
 
 	return c.tokenRequest(ctx, form)
@@ -34,7 +35,7 @@ func (c Client) RefreshTokens(ctx context.Context, refreshToken string) (TokenRe
 		"client_secret": []string{c.ClientSecret},
 		"grant_type":    []string{"refresh_token"},
 		"refresh_token": []string{refreshToken},
-		"scope":         c.Scope,
+		"scope":         []string{strings.Join(c.Scope, " ")},
 	}
 
 	return c.tokenRequest(ctx, form)
@@ -48,11 +49,10 @@ func (c Client) tokenRequest(ctx context.Context, form url.Values) (TokenRespons
 		httpClient = http.DefaultClient
 	}
 
-	req, err := http.NewRequest(http.MethodPost, c.Endpoint.TokenURL, nil)
+	req, err := http.NewRequest(http.MethodPost, c.Endpoint.TokenURL, strings.NewReader(form.Encode()))
 	if err != nil {
 		return response, errors.Wrap(err, "oidc: couldn't create a token request")
 	}
-	req.Form = form
 	req = req.WithContext(ctx)
 
 	resp, err := httpClient.Do(req)

@@ -16,12 +16,15 @@ const (
 	sessionCookieName = "oidc_session"
 )
 
+type redirectFunc func(r *http.Request) bool
+
 type middleware struct {
 	mux            *http.ServeMux
 	client         oidc.Client
 	cookieStore    *securecookie.SecureCookie
 	sessionStorage oidc.SessionStorage
 	next           http.Handler
+	redirect       redirectFunc
 }
 
 func (m *middleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -41,6 +44,10 @@ func New(client oidc.Client, sessionStorage oidc.SessionStorage, next http.Handl
 		),
 		next:           next,
 		sessionStorage: sessionStorage,
+		redirect: func(r *http.Request) bool {
+			// TODO
+			return r.Method == http.MethodGet
+		},
 	}
 	mux.HandleFunc("/oauth2/callback", m.authorizeCallback)
 	mux.HandleFunc("/", m.defaultHandler)

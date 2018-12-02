@@ -1,0 +1,66 @@
+digraph {
+    node [shape="box", style=rounded]
+
+    start[label="incoming request"];
+    access_token_exists[shape="diamond", style=solid, label="access_token in request"]
+    access_token_valid[shape="diamond", style=solid, label="access_token valid"]
+//    unauthorized[shape="diamond", style=solid]
+    callback[shape="diamond", style=solid, label="POST to callback url"]
+
+    oidc_provider[label="OIDC login page"]
+    error_response[label="{statusCode: 401, redirectTo: '<url-to-login-page>'}"]
+    cleanup[label="clear possible session and cookies"]
+    store_original_url[label="store original url in session"]
+    original_url_in_session[label="original url in session"]
+    redirect_to_original_url[label="redirect to original url"]
+    redirect_to_root[label="redirect to '/'"]
+    redirect_to_error[label="respond with error"]
+    upstream[label="reverse proxy to upstream"]
+
+    // -------------- START --------------
+    start -> access_token_exists;
+    // -------------- START --------------
+
+    // -------------- ACCESS TOKEN VALIDATION --------------
+    access_token_exists -> try_to_refresh_tokens[label="no"];
+    try_to_refresh_tokens -> access_token_valid
+
+    access_token_exists -> access_token_valid[label="yes"];
+    access_token_valid -> try_to_refresh_tokens[label="expired"]
+    access_token_valid -> unauthorized[label="no"]
+
+    access_token_valid -> upstream[label="yes"]
+    // -------------- ACCESS TOKEN VALIDATION --------------
+
+
+
+    // -------------- UNAUTHORIZED --------------
+    unauthorized -> cleanup
+    cleanup -> store_state_in_session
+    store_state_in_session -> redirect
+    redirect -> error_response[label="no"]
+
+    redirect -> store_original_url[label="yes"]
+    store_original_url -> oidc_provider[label="303 See Other"]
+    // -------------- UNAUTHORIZED --------------
+
+
+
+
+    //    cleanup -> unauthorized
+
+
+//    unauthorized -> error_response[label="401 Forbidden"]
+
+
+
+
+    // -------------- LOGIN PAGE --------------
+    oidc_provider -> callback
+    callback -> redirect_to_error[label="error"]
+
+    callback -> original_url_in_session[label="ok"]
+    original_url_in_session -> redirect_to_root[label="no"]
+    original_url_in_session -> redirect_to_original_url[label="yes"]
+    // -------------- LOGIN PAGE --------------
+}

@@ -1,6 +1,7 @@
 package oidc
 
 import (
+	"context"
 	"net/url"
 	"strings"
 )
@@ -21,7 +22,7 @@ type AuthenticationResponse struct {
 	State string
 }
 
-func (c Client) AuthenticationResponseForm(form url.Values) (AuthenticationResponse, error) {
+func (c Client) AuthenticationResponseForm(ctx context.Context, form url.Values) (AuthenticationResponse, error) {
 	response := AuthenticationResponse{
 		Code:  form.Get("code"),
 		State: form.Get("state"),

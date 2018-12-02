@@ -37,3 +37,11 @@ func (mem *Memory) Save(ctx context.Context, key []byte, session oidc.Session) e
 
 	return nil
 }
+
+func (mem *Memory) Delete(ctx context.Context, key []byte) error {
+	mem.mutex.Lock()
+	delete(mem.memory, string(key))
+	mem.mutex.Unlock()
+
+	return nil
+}

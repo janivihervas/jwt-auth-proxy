@@ -1,14 +1,13 @@
+/**
+Package random provides functions for generating random length strings and byte slices.
+Code originated from Stack Overflow question (https://stackoverflow.com/q/22892120) and from this answer: https://stackoverflow.com/a/31832326
+*/
 package random
 
 import (
 	"math/rand"
-
-	"github.com/gorilla/securecookie"
+	"time"
 )
-
-func Byte(length int) []byte {
-	return securecookie.GenerateRandomKey(length)
-}
 
 const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 const (
@@ -17,11 +16,14 @@ const (
 	letterIdxMax  = 63 / letterIdxBits   // # of letter indices fitting in 63 bits
 )
 
-func String(n int) string {
-	//return string(Byte(length))
-	b := make([]byte, n)
+func init() {
+	rand.Seed(time.Now().UnixNano())
+}
+
+func Bytes(length int) []byte {
+	b := make([]byte, length)
 	// A rand.Int63() generates 63 random bits, enough for letterIdxMax letters!
-	for i, cache, remain := n-1, rand.Int63(), letterIdxMax; i >= 0; {
+	for i, cache, remain := length-1, rand.Int63(), letterIdxMax; i >= 0; {
 		if remain == 0 {
 			cache, remain = rand.Int63(), letterIdxMax
 		}
@@ -33,5 +35,9 @@ func String(n int) string {
 		remain--
 	}
 
-	return string(b)
+	return b
+}
+
+func String(length int) string {
+	return string(Bytes(length))
 }

@@ -9,6 +9,7 @@ type Session struct {
 	ID           []byte
 	State        string
 	RefreshToken string
+	OriginalURL  string
 }
 
 var (
@@ -18,4 +19,5 @@ var (
 type SessionStorage interface {
 	Get(ctx context.Context, key []byte) (Session, error)
 	Save(ctx context.Context, key []byte, session Session) error
+	Delete(ctx context.Context, key []byte) error
 }
