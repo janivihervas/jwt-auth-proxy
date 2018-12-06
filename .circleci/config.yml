@@ -8,7 +8,7 @@ machine:
 jobs:
   build:
     docker:
-      - image: circleci/golang:1.11.2
+      - image: circleci/golang:1.11.2-node
     steps:
       - checkout
       - run:
@@ -23,12 +23,14 @@ jobs:
       - run:
           name: Install
           command: |
-            make update
             if [[ $CIRCLE_BRANCH != "master" ]]; then
+              make update
               if [[ $(git status --porcelain) ]]; then
                 git add --all
                 git commit -m "AUTOBOT: Install"
               fi
+            else
+              make install
             fi
       - save_cache:
           key: v1-deps-{{ arch }}-{{ checksum "go.mod" }}
@@ -44,9 +46,33 @@ jobs:
                 git commit -m "AUTOBOT: Format"
               fi
             fi
+      - run:
+          name: Format Markdown
+          command: |
+            if [[ $CIRCLE_BRANCH != "master" ]]; then
+              npm install -g prettier@1.14.0 markdown-toc@1.2.0
+              find . -type f -name "*.md" | parallel -k 'markdown-toc -i "{}"'
+              prettier --write "**/*.md"
+              if [[ $(git status --porcelain) ]]; then
+                git add --all
+                git commit -m "AUTOBOT: Format Markdown"
+              fi
+            fi
       - run: make lint
       - run: make test-codecov
 #      - run: make release
+      - run:
+          name: Update diagrams
+          command: |
+            if [[ $CIRCLE_BRANCH != "master" ]]; then
+              sudo apt-get update
+              sudo apt-get install -y -qq graphviz
+              find . -name "*.gv" | sed 's/\.gv//' | xargs -I {} dot -Tpng -o {}.png {}.gv
+              if [[ $(git status --porcelain) ]]; then
+                git add --all
+                git commit -m "AUTOBOT: Update diagrams"
+              fi
+            fi
       - run:
           name: Push autobot changes
           command: |
