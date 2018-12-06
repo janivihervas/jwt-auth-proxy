@@ -4,8 +4,9 @@ digraph {
     start[label="incoming request"];
     access_token_exists[shape="diamond", style=solid, label="access_token in request"]
     access_token_valid[shape="diamond", style=solid, label="access_token valid"]
-//    unauthorized[shape="diamond", style=solid]
     callback[shape="diamond", style=solid, label="POST to callback url"]
+    try_to_refresh_tokens[label="try to refresh tokens"]
+    store_state_in_session[label="store state in session"]
 
     oidc_provider[label="OIDC login page"]
     error_response[label="{statusCode: 401, redirectTo: '<url-to-login-page>'}"]
@@ -43,15 +44,6 @@ digraph {
     redirect -> store_original_url[label="yes"]
     store_original_url -> oidc_provider[label="303 See Other"]
     // -------------- UNAUTHORIZED --------------
-
-
-
-
-    //    cleanup -> unauthorized
-
-
-//    unauthorized -> error_response[label="401 Forbidden"]
-
 
 
 

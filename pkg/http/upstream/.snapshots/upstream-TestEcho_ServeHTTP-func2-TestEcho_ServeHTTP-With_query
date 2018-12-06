@@ -1,0 +1,6 @@
+Method: GET
+Path: /queries
+
+Query values:
+  foo: bar
+
