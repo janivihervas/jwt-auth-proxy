@@ -50,7 +50,7 @@ jobs:
           name: Format Markdown
           command: |
             if [[ $CIRCLE_BRANCH != "master" ]]; then
-              npm install -g prettier@1.14.0 markdown-toc@1.2.0
+              sudo npm install -g prettier@1.14.0 markdown-toc@1.2.0
               find . -type f -name "*.md" | parallel -k 'markdown-toc -i "{}"'
               prettier --write "**/*.md"
               if [[ $(git status --porcelain) ]]; then
