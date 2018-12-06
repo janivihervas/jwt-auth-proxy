@@ -1,4 +1,4 @@
-# OpenID Connect library and middleware for Go 
+# OpenID Connect library and middleware for Go
 
 [![CircleCI](https://circleci.com/gh/janivihervas/oidc-go.svg?style=svg)](https://circleci.com/gh/janivihervas/oidc-go)
 [![codecov](https://codecov.io/gh/janivihervas/oidc-go/branch/master/graph/badge.svg)](https://codecov.io/gh/janivihervas/oidc-go)
@@ -12,16 +12,19 @@
 <!-- tocstop -->
 
 Use cases:
- - As a library (like [golang.org/x/oauth2](https://godoc.org/golang.org/x/oauth2)) for requesting and validating JWT tokens
- - As a middleware for authenticating requests to your server
- - As a standalone application (reverse proxy) for authenticating requests to your application
- 
+
+- As a library (like [golang.org/x/oauth2](https://godoc.org/golang.org/x/oauth2)) for requesting and validating JWT tokens
+- As a middleware for authenticating requests to your server
+- As a standalone application (reverse proxy) for authenticating requests to your application
+
 Features:
- - Validating JWT access tokens
- - Refreshing JWT access tokens with refresh tokens
- 
-I used to use [bitly/oauth2_proxy](https://github.com/bitly/oauth2_proxy) as a reverse proxy, but I found it lacking in features. Mainly it was missing  
- - refreshing access tokens,
- - having an option of **not** redirecting every request to OIDC/OAuth2 provider's login page. E.g. API calls with expired authentication from frontend are always redirected to login, where as they should return a forbidden response.
+
+- Validating JWT access tokens
+- Refreshing JWT access tokens with refresh tokens
+
+I used to use [bitly/oauth2_proxy](https://github.com/bitly/oauth2_proxy) as a reverse proxy, but I found it lacking in features. Mainly it was missing
+
+- refreshing access tokens,
+- having an option of **not** redirecting every request to OIDC/OAuth2 provider's login page. E.g. API calls with expired authentication from frontend are always redirected to login, where as they should return a forbidden response.
 
 See [flow diagram](doc/flow-diagram.md)
