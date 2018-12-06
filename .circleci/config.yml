@@ -58,9 +58,6 @@ jobs:
                 git commit -m "AUTOBOT: Format Markdown"
               fi
             fi
-      - run: make lint
-      - run: make test-codecov
-#      - run: make release
       - run:
           name: Update diagrams
           command: |
@@ -73,6 +70,16 @@ jobs:
                 git commit -m "AUTOBOT: Update diagrams"
               fi
             fi
+      - run: make lint
+      - run:
+          name: make test-codecov
+          command: |
+            make test-codecov
+            if [[ $(git status --porcelain) ]]; then
+              git add --all
+              git commit -m "AUTOBOT: Update snapshots"
+            fi
+#      - run: make release
       - run:
           name: Push autobot changes
           command: |
