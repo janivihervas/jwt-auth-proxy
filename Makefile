@@ -17,9 +17,7 @@ GO_TOOLS := golang.org/x/lint/golint \
 			gitlab.com/opennota/check/cmd/structcheck \
 			gitlab.com/opennota/check/cmd/varcheck \
 			\
-			honnef.co/go/tools/cmd/gosimple \
 			honnef.co/go/tools/cmd/staticcheck \
-			honnef.co/go/tools/cmd/unused
 
 .PHONY: all
 all: format build lint test
@@ -28,12 +26,18 @@ all: format build lint test
 clean:
 	@rm -rf bin
 
-.PHONY: install update
+.PHONY: install install-new install-update
 install:
-	go get ./...
+	go mod download
+	go mod tidy -v
 	go get $(GO_TOOLS)
 	go mod verify
-update:
+install-new:
+	go get ./...
+	go mod tidy -v
+	go get $(GO_TOOLS)
+	go mod verify
+install-update:
 	go get -u ./...
 	go mod tidy -v
 	go get -u $(GO_TOOLS)
@@ -66,17 +70,12 @@ structcheck:
 varcheck:
 	varcheck ./...
 
-.PHONY: gosimple staticcheck unused
-gosimple:
-	gosimple ./...
+.PHONY: staticcheck
 staticcheck:
 	staticcheck ./...
-unused:
-	unused ./...
 
 .PHONY: lint
 lint:
-#	Commented are the ones that don't support Go modules yet
 	@$(MAKE) -j \
 	vet \
 	golint \
@@ -84,14 +83,12 @@ lint:
 	nakedret \
 	gocyclo \
 	errcheck \
-#	unconvert \
+	unconvert \
 	\
 	structcheck \
 	varcheck \
-#	\
-#	gosimple \
-#	staticcheck \
-#	unused
+	\
+	staticcheck
 
 
 .PHONY: test
