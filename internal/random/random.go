@@ -1,7 +1,5 @@
-/**
-Package random provides functions for generating random length strings and byte slices.
-Code originated from Stack Overflow question (https://stackoverflow.com/q/22892120) and from this answer: https://stackoverflow.com/a/31832326
-*/
+// Package random provides functions for generating random length strings and byte slices.
+// Code originated from Stack Overflow question (https://stackoverflow.com/q/22892120) and from this answer: https://stackoverflow.com/a/31832326
 package random
 
 import (
