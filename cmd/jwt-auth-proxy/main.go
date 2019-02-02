@@ -5,7 +5,7 @@ import (
 
 	"github.com/janivihervas/oidc-go/internal/server"
 
-	"github.com/janivihervas/oidc-go/pkg/http/upstream"
+	"github.com/janivihervas/oidc-go/upstream"
 )
 
 func main() {
