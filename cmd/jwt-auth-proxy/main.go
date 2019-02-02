@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	"github.com/janivihervas/oidc-go/internal/storage"
+	"github.com/janivihervas/oidc-go/session/memory"
 
 	"github.com/janivihervas/oidc-go"
 	"github.com/janivihervas/oidc-go/azure"
@@ -40,7 +40,7 @@ func main() {
 		RedirectURL:  "http://localhost:3000/oauth2/callback",
 		Scope:        []string{oidc.ScopeOpenID, oidc.ScopeOfflineAccess},
 	},
-		storage.NewMemory(),
+		memory.New(),
 		upstream.Echo{},
 	)
 
