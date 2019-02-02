@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	"github.com/janivihervas/oidc-go/pkg/http/server"
+	"github.com/janivihervas/oidc-go/internal/server"
 
 	"github.com/janivihervas/oidc-go/pkg/http/upstream"
 )
