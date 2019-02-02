@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"syscall"
 
 	"time"
 )
@@ -27,8 +28,8 @@ func RunHTTP(port string, handler http.Handler) error {
 		MaxHeaderBytes: 1 << 20,
 	}
 
-	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, os.Interrupt)
+	quit := make(chan os.Signal)
+	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
 
 	go func() {
 		s := <-quit
