@@ -9,8 +9,8 @@ import (
 	"time"
 )
 
-const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 const (
+	letterBytes   = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 	letterIdxBits = 6                    // 6 bits to represent a letter index
 	letterIdxMask = 1<<letterIdxBits - 1 // All 1-bits, as many as letterIdxBits
 	letterIdxMax  = 63 / letterIdxBits   // # of letter indices fitting in 63 bits
@@ -20,6 +20,7 @@ func init() {
 	rand.Seed(time.Now().UnixNano())
 }
 
+// Bytes returns a random byte slice of specified length
 func Bytes(length int) []byte {
 	b := make([]byte, length)
 	// A rand.Int63() generates 63 random bits, enough for letterIdxMax letters!
@@ -38,6 +39,7 @@ func Bytes(length int) []byte {
 	return b
 }
 
+// String returns a random string of specified length
 func String(length int) string {
 	return string(Bytes(length))
 }
