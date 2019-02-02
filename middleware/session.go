@@ -4,13 +4,13 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/janivihervas/oidc-go"
+	"github.com/janivihervas/oidc-go/session"
 
 	"github.com/janivihervas/oidc-go/internal/random"
 	"github.com/pkg/errors"
 )
 
-func (m *middleware) getSession(ctx context.Context, w http.ResponseWriter, r *http.Request, createNew bool) (oidc.Session, error) {
+func (m *middleware) getSession(ctx context.Context, w http.ResponseWriter, r *http.Request, createNew bool) (session.State, error) {
 	var (
 		sessionID []byte
 	)
@@ -21,7 +21,7 @@ func (m *middleware) getSession(ctx context.Context, w http.ResponseWriter, r *h
 		if createNew {
 			return m.createNewSession(ctx, w)
 		}
-		return oidc.Session{}, errors.Wrap(err, "middleware: couldn't get session id cookie")
+		return session.State{}, errors.Wrap(err, "middleware: couldn't get session id cookie")
 	}
 
 	err = m.cookieStore.Decode(sessionCookieName, cookie.Value, &sessionID)
@@ -30,23 +30,23 @@ func (m *middleware) getSession(ctx context.Context, w http.ResponseWriter, r *h
 		if createNew {
 			return m.createNewSession(ctx, w)
 		}
-		return oidc.Session{}, errors.Wrap(err, "middleware: couldn't decode session id from cookie")
+		return session.State{}, errors.Wrap(err, "middleware: couldn't decode session id from cookie")
 	}
 
-	session, err := m.sessionStorage.Get(ctx, sessionID)
+	state, err := m.sessionStorage.Get(ctx, sessionID)
 	if err != nil {
 		// Session is not stored in storage
 		if createNew {
 			return m.createNewSession(ctx, w)
 		}
-		return oidc.Session{}, errors.Wrap(err, "middleware: couldn't get session from storage")
+		return session.State{}, errors.Wrap(err, "middleware: couldn't get session from storage")
 	}
 
-	return session, nil
+	return state, nil
 }
 
-func (m *middleware) createNewSession(ctx context.Context, w http.ResponseWriter) (oidc.Session, error) {
-	newSession := oidc.Session{
+func (m *middleware) createNewSession(ctx context.Context, w http.ResponseWriter) (session.State, error) {
+	newSession := session.State{
 		ID: random.Bytes(32),
 	}
 
@@ -74,13 +74,13 @@ func (m *middleware) clearSessionAndAccessToken(ctx context.Context, w http.Resp
 	cookie.MaxAge = -1
 	http.SetCookie(w, cookie)
 
-	session, err := m.getSession(ctx, w, r, false)
+	state, err := m.getSession(ctx, w, r, false)
 	if err != nil {
 		// log err
 		return
 	}
 
-	err = m.sessionStorage.Delete(ctx, session.ID)
+	err = m.sessionStorage.Delete(ctx, state.ID)
 	if err != nil {
 		// log err
 	}

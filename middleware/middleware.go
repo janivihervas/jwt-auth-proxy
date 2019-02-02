@@ -4,6 +4,8 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/janivihervas/oidc-go/session"
+
 	"github.com/gorilla/securecookie"
 
 	"github.com/janivihervas/oidc-go"
@@ -22,7 +24,7 @@ type middleware struct {
 	mux            *http.ServeMux
 	client         oidc.Client
 	cookieStore    *securecookie.SecureCookie
-	sessionStorage oidc.SessionStorage
+	sessionStorage session.Storage
 	next           http.Handler
 	redirect       redirectFunc
 }
@@ -31,8 +33,7 @@ func (m *middleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	m.mux.ServeHTTP(w, r)
 }
 
-// New ...
-func New(client oidc.Client, sessionStorage oidc.SessionStorage, next http.Handler) http.Handler {
+func New(client oidc.Client, sessionStorage session.Storage, next http.Handler) http.Handler {
 	mux := http.NewServeMux()
 	m := &middleware{
 		mux:    mux,
