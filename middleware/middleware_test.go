@@ -11,7 +11,7 @@ import (
 
 	"github.com/janivihervas/oidc-go/internal/mock"
 
-	"github.com/janivihervas/oidc-go/internal/http/upstream"
+	"github.com/janivihervas/oidc-go/upstream"
 )
 
 func TestNewWithMockRedirect(t *testing.T) {

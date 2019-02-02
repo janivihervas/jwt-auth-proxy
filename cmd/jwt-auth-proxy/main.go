@@ -12,7 +12,7 @@ import (
 
 	"github.com/janivihervas/oidc-go/internal/server"
 
-	"github.com/janivihervas/oidc-go/internal/http/upstream"
+	"github.com/janivihervas/oidc-go/upstream"
 
 	"github.com/kelseyhightower/envconfig"
 	"github.com/subosito/gotenv"
