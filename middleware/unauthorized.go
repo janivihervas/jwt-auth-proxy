@@ -30,7 +30,7 @@ func (m *middleware) unauthorized(ctx context.Context, w http.ResponseWriter, r 
 		}
 	}
 
-	redirectURL := m.client.AuthenticationRequestURL(oidc.ResponseModeFormPost, session.State)
+	redirectURL := m.client.AuthenticationRequestURL(session.State, oidc.ResponseModeFormPost)
 	if !m.redirect(r) {
 		m.unauthorizedResponse(ctx, w, redirectURL)
 		return

@@ -1,32 +1,27 @@
+// Package oidc provides a client to handle OpenID Connect authentication flow
 package oidc
 
 import (
-	"errors"
 	"net/http"
+
+	"golang.org/x/oauth2"
 )
 
 const (
+	// ScopeOpenID will return basic information
 	ScopeOpenID        = "openid"
 	ScopeOfflineAccess = "offline_access"
-
-	ResponseModeFormPost = "form_post"
 )
 
-var (
-	ErrNoCodeInResponse  = errors.New("oidc: no code in authentication response")
-	ErrNoStateInResponse = errors.New("oidc: no state in authentication response")
-)
-
+// Client for handling OIDC authentication flow
 type Client struct {
-	ClientID     string
+	// ClientID of the authentication app
+	ClientID string
+	// ClientSecret of the authentication app
 	ClientSecret string
-	RedirectURL  string
-	Scope        []string
-	Endpoint     Endpoint
-	HTTPClient   *http.Client
-}
-
-type Endpoint struct {
-	AuthURL  string
-	TokenURL string
+	// RedirectURL
+	RedirectURL string
+	Scope       []string
+	Endpoint    oauth2.Endpoint
+	HTTPClient  *http.Client
 }

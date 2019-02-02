@@ -8,4 +8,5 @@ require (
 	github.com/pkg/errors v0.8.1
 	github.com/stretchr/testify v1.3.0
 	github.com/subosito/gotenv v1.1.1
+	golang.org/x/oauth2 v0.0.0-20190130055435-99b60b757ec1
 )

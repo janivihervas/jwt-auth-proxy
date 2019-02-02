@@ -24,7 +24,7 @@ func (m *middleware) authorizeCallback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response, err := m.client.AuthenticationResponseForm(ctx, r.Form)
+	response, err := m.client.ParseAuthenticationResponseForm(ctx, r.Form)
 	if err != nil {
 		//http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 		http.Error(w, fmt.Sprintf("%+v", err), http.StatusBadRequest)

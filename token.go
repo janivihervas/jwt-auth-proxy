@@ -10,13 +10,18 @@ import (
 	"github.com/pkg/errors"
 )
 
-type TokenResponse struct {
-	AccessToken  string `json:"access_token"`
-	IDToken      string `json:"id_token"`
+// Token response from requesting tokens
+type Token struct {
+	// AccessToken is used for authentication
+	AccessToken string `json:"access_token"`
+	// IDToken is used for identification
+	IDToken string `json:"id_token"`
+	// RefreshToken is used for refreshing access and ID tokens
 	RefreshToken string `json:"refresh_token"`
 }
 
-func (c Client) TokenRequest(ctx context.Context, code string) (TokenResponse, error) {
+// TokenRequest for requesting new tokens. Code parameter is from the AuthenticationResponse
+func (c Client) TokenRequest(ctx context.Context, code string) (Token, error) {
 	form := url.Values{
 		"client_id":     []string{c.ClientID},
 		"client_secret": []string{c.ClientSecret},
@@ -29,7 +34,8 @@ func (c Client) TokenRequest(ctx context.Context, code string) (TokenResponse, e
 	return c.tokenRequest(ctx, form)
 }
 
-func (c Client) RefreshTokens(ctx context.Context, refreshToken string) (TokenResponse, error) {
+// RefreshTokens will refresh the tokens with provided refresh token
+func (c Client) RefreshTokens(ctx context.Context, refreshToken string) (Token, error) {
 	form := url.Values{
 		"client_id":     []string{c.ClientID},
 		"client_secret": []string{c.ClientSecret},
@@ -41,8 +47,8 @@ func (c Client) RefreshTokens(ctx context.Context, refreshToken string) (TokenRe
 	return c.tokenRequest(ctx, form)
 }
 
-func (c Client) tokenRequest(ctx context.Context, form url.Values) (TokenResponse, error) {
-	var response TokenResponse
+func (c Client) tokenRequest(ctx context.Context, form url.Values) (Token, error) {
+	var response Token
 
 	httpClient := c.HTTPClient
 	if httpClient == nil {
@@ -64,7 +70,7 @@ func (c Client) tokenRequest(ctx context.Context, form url.Values) (TokenRespons
 	}()
 
 	if resp.StatusCode != http.StatusOK {
-		return response, errors.Wrapf(err, "oidc: token request failed; not 200 status code: %d", resp.StatusCode)
+		return response, errors.Wrapf(err, "oidc: token request failed; non-200 status code: %d", resp.StatusCode)
 	}
 
 	err = json.NewDecoder(resp.Body).Decode(&response)
