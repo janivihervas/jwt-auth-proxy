@@ -10,7 +10,7 @@ import (
 
 	"github.com/janivihervas/oidc-go/middleware"
 
-	"github.com/janivihervas/oidc-go/internal/http/server"
+	"github.com/janivihervas/oidc-go/internal/server"
 
 	"github.com/janivihervas/oidc-go/internal/http/upstream"
 
