@@ -3,11 +3,9 @@ package main
 import (
 	"os"
 
-	"golang.org/x/oauth2"
+	"github.com/janivihervas/authproxy/internal/server"
 
-
-	"github.com/kelseyhightower/envconfig"
-	"github.com/subosito/gotenv"
+	"github.com/janivihervas/authproxy/upstream"
 )
 
 type Config struct {
@@ -17,26 +15,31 @@ type Config struct {
 }
 
 func main() {
-	var config Config
+	//var config Config
+	//
+	//_ = gotenv.OverLoad(".env")
+	//err := envconfig.Process("", &config)
+	//if err != nil {
+	//	panic(err)
+	//}
+	//
+	//m := jwt_auth_proxy.NewMiddleware(&oauth2.Config{
+	//	ClientID:     config.AzureClientID,
+	//	ClientSecret: config.AzureClientSecret,
+	//	Endpoint:     azure.Endpoint(config.AzureTenant),
+	//	RedirectURL:  "http://localhost:3000/oauth2/callback",
+	//	Scopes:       []string{oidc.ScopeOpenID, oidc.ScopeOfflineAccess},
+	//},
+	//	memory.New(),
+	//	upstream.Echo{},
+	//)
+	//
+	//err = server.RunHTTP(os.Getenv("PORT"), m)
+	//if err != nil {
+	//	panic(err)
+	//}
 
-	_ = gotenv.OverLoad(".env")
-	err := envconfig.Process("", &config)
-	if err != nil {
-		panic(err)
-	}
-
-	m := jwt_auth_proxy.NewMiddleware(&oauth2.Config{
-		ClientID:     config.AzureClientID,
-		ClientSecret: config.AzureClientSecret,
-		Endpoint:     azure.Endpoint(config.AzureTenant),
-		RedirectURL:  "http://localhost:3000/oauth2/callback",
-		Scopes:       []string{oidc.ScopeOpenID, oidc.ScopeOfflineAccess},
-	},
-		memory.New(),
-		upstream.Echo{},
-	)
-
-	err = server.RunHTTP(os.Getenv("PORT"), m)
+	err := server.RunHTTP(os.Getenv("PORT"), upstream.Echo{})
 	if err != nil {
 		panic(err)
 	}

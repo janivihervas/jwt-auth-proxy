@@ -45,7 +45,7 @@ func (m *Middleware) getAccessTokenFromSession(ctx context.Context, r *http.Requ
 		return ""
 	}
 
-	state, err := m.sessionStorage.Get(ctx, sessionID)
+	state, err := m.SessionStorage.Get(ctx, sessionID)
 	if err != nil || state.AccessToken == "" {
 		return ""
 	}
@@ -100,7 +100,7 @@ func (m *Middleware) setupAccessTokenAndSession(ctx context.Context, w http.Resp
 			return errors.Wrap(err, "middleware: couldn't encode session ID")
 		}
 
-		err = m.sessionStorage.Save(ctx, state.ID, state)
+		err = m.SessionStorage.Save(ctx, state.ID, state)
 		if err != nil {
 			return errors.Wrap(err, "middleware: couldn't save session to storage")
 		}
@@ -141,7 +141,7 @@ func (m *Middleware) refreshAccessToken(ctx context.Context, w http.ResponseWrit
 
 	accessToken, _ := m.getAccessToken(ctx, r)
 
-	tokens, err := m.authClient.TokenSource(r.Context(), &oauth2.Token{
+	tokens, err := m.AuthClient.TokenSource(r.Context(), &oauth2.Token{
 		AccessToken:  accessToken,
 		RefreshToken: session.RefreshToken,
 	}).Token()
@@ -154,7 +154,7 @@ func (m *Middleware) refreshAccessToken(ctx context.Context, w http.ResponseWrit
 	}
 
 	http.SetCookie(w, createAccessTokenCookie(tokens.AccessToken))
-	err = m.sessionStorage.Save(ctx, session.ID, session)
+	err = m.SessionStorage.Save(ctx, session.ID, session)
 	if err != nil {
 		// log error
 	}

@@ -7,6 +7,7 @@ import (
 
 	"github.com/gorilla/securecookie"
 	"github.com/janivihervas/authproxy/session"
+
 	"golang.org/x/oauth2"
 
 	"github.com/pkg/errors"
