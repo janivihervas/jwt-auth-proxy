@@ -14,7 +14,7 @@ jobs:
       - run:
           name: Setup git
           command: |
-            git remote add pushback https://$PUSHBACK_TOKEN@github.com/janivihervas/oidc-go.git
+            git remote add pushback https://$PUSHBACK_TOKEN@github.com/janivihervas/authproxy.git
             git config --global user.name $PUSHBACK_USER_NAME
             git config --global user.email $PUSHBACK_USER_EMAIL
       - restore_cache:
