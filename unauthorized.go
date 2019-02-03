@@ -23,22 +23,22 @@ func (m *Middleware) unauthorized(ctx context.Context, w http.ResponseWriter, r 
 		state := random.String(32)
 		session.AuthRequestState = state
 
-		err = m.sessionStorage.Save(ctx, session.ID, session)
+		err = m.SessionStorage.Save(ctx, session.ID, session)
 		if err != nil {
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return
 		}
 	}
 
-	redirectURL := m.authClient.AuthCodeURL(session.AuthRequestState, oauth2.AccessTypeOffline)
-	//redirectURL := m.authClient.AuthenticationRequestURL(session.AuthRequestState, oidc.ResponseModeFormPost)
-	if !m.redirect(r) {
-		m.unauthorizedResponse(ctx, w, redirectURL)
-		return
-	}
+	redirectURL := m.AuthClient.AuthCodeURL(session.AuthRequestState, oauth2.AccessTypeOffline)
+	// TODO
+	//if !m.redirect(r) {
+	//	m.unauthorizedResponse(ctx, w, redirectURL)
+	//	return
+	//}
 
 	session.OriginalURL = r.URL.String()
-	err = m.sessionStorage.Save(ctx, session.ID, session)
+	err = m.SessionStorage.Save(ctx, session.ID, session)
 	if err != nil {
 		// log err
 	}

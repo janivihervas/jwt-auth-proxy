@@ -33,7 +33,7 @@ func (m *Middleware) getSession(ctx context.Context, w http.ResponseWriter, r *h
 		return session.State{}, errors.Wrap(err, "middleware: couldn't decode session id from cookie")
 	}
 
-	state, err := m.sessionStorage.Get(ctx, sessionID)
+	state, err := m.SessionStorage.Get(ctx, sessionID)
 	if err != nil {
 		// Session is not stored in storage
 		if createNew {
@@ -55,7 +55,7 @@ func (m *Middleware) createNewSession(ctx context.Context, w http.ResponseWriter
 		return newSession, errors.Wrap(err, "middleware: couldn't encode session ID")
 	}
 
-	err = m.sessionStorage.Save(ctx, newSession.ID, newSession)
+	err = m.SessionStorage.Save(ctx, newSession.ID, newSession)
 	if err != nil {
 		return newSession, errors.Wrap(err, "middleware: couldn't save session to storage")
 	}
@@ -80,7 +80,7 @@ func (m *Middleware) clearSessionAndAccessToken(ctx context.Context, w http.Resp
 		return
 	}
 
-	err = m.sessionStorage.Delete(ctx, state.ID)
+	err = m.SessionStorage.Delete(ctx, state.ID)
 	if err != nil {
 		// log err
 	}

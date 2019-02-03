@@ -39,7 +39,7 @@ func (m *Middleware) defaultHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	m.next.ServeHTTP(w, r)
+	m.Next.ServeHTTP(w, r)
 }
 
 func (m *Middleware) authorizeCallback(w http.ResponseWriter, r *http.Request) {
@@ -77,7 +77,7 @@ func (m *Middleware) authorizeCallback(w http.ResponseWriter, r *http.Request) {
 
 	// Clean previous state from session
 	session.AuthRequestState = ""
-	err = m.sessionStorage.Save(ctx, session.ID, session)
+	err = m.SessionStorage.Save(ctx, session.ID, session)
 	if err != nil {
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 	}
@@ -87,7 +87,7 @@ func (m *Middleware) authorizeCallback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tokens, err := m.authClient.Exchange(ctx, code, oauth2.AccessTypeOffline)
+	tokens, err := m.AuthClient.Exchange(ctx, code, oauth2.AccessTypeOffline)
 	spew.Dump(tokens)
 	if err != nil {
 		//http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
@@ -98,7 +98,7 @@ func (m *Middleware) authorizeCallback(w http.ResponseWriter, r *http.Request) {
 	if tokens.RefreshToken != "" {
 		// Refresh refresh_token
 		session.RefreshToken = tokens.RefreshToken
-		err = m.sessionStorage.Save(ctx, session.ID, session)
+		err = m.SessionStorage.Save(ctx, session.ID, session)
 		if err != nil {
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return
@@ -111,7 +111,7 @@ func (m *Middleware) authorizeCallback(w http.ResponseWriter, r *http.Request) {
 
 	// Clear previous redirect url from session
 	session.OriginalURL = ""
-	err = m.sessionStorage.Save(ctx, session.ID, session)
+	err = m.SessionStorage.Save(ctx, session.ID, session)
 	if err != nil {
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 	}
