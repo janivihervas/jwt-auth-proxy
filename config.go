@@ -6,6 +6,7 @@ import (
 	"regexp"
 
 	"github.com/janivihervas/authproxy/session"
+	"github.com/gorilla/securecookie"
 
 	"golang.org/x/oauth2"
 

@@ -2,9 +2,12 @@ package authproxy
 
 import (
 	"context"
+	"github.com/pkg/errors"
 	"net/http"
 	"strings"
 
+	"github.com/janivihervas/authproxy/internal/random"
+	"github.com/janivihervas/authproxy/session"
 )
 
 func (m *Middleware) getAccessTokenFromCookie(ctx context.Context, r *http.Request) string {
@@ -39,7 +42,7 @@ func (m *Middleware) getAccessTokenFromSession(ctx context.Context, r *http.Requ
 		return ""
 	}
 
-	state, err := m.sessionStorage.Get(ctx, sessionID)
+	state, err := m.SessionStorage.Get(ctx, sessionID)
 	if err != nil || state.AccessToken == "" {
 		return ""
 	}
@@ -94,7 +97,7 @@ func (m *Middleware) setupAccessTokenAndSession(ctx context.Context, w http.Resp
 			return errors.Wrap(err, "middleware: couldn't encode session ID")
 		}
 
-		err = m.sessionStorage.Save(ctx, state.ID, state)
+		err = m.SessionStorage.Save(ctx, state.ID, state)
 		if err != nil {
 			return errors.Wrap(err, "middleware: couldn't save session to storage")
 		}
@@ -107,6 +110,7 @@ func (m *Middleware) setupAccessTokenAndSession(ctx context.Context, w http.Resp
 	return nil
 }
 
+//lint:ignore U1000 not in use yet
 func (m *Middleware) getAccessToken(ctx context.Context, r *http.Request) (string, error) {
 	if s := m.getAccessTokenFromCookie(ctx, r); s != "" {
 		return s, nil
