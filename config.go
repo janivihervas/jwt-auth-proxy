@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"regexp"
 
-	"github.com/janivihervas/authproxy/session"
 	"github.com/gorilla/securecookie"
+	"github.com/janivihervas/authproxy/session"
 
 	"golang.org/x/oauth2"
 

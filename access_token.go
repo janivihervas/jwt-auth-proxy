@@ -2,9 +2,10 @@ package authproxy
 
 import (
 	"context"
-	"github.com/pkg/errors"
 	"net/http"
 	"strings"
+
+	"github.com/pkg/errors"
 
 	"github.com/janivihervas/authproxy/internal/random"
 	"github.com/janivihervas/authproxy/session"
