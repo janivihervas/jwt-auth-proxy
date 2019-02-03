@@ -5,9 +5,9 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/janivihervas/oidc-go/internal/random"
+	"golang.org/x/oauth2"
 
-	"github.com/janivihervas/oidc-go"
+	"github.com/janivihervas/oidc-go/internal/random"
 )
 
 func (m *middleware) unauthorized(ctx context.Context, w http.ResponseWriter, r *http.Request) {
@@ -30,7 +30,8 @@ func (m *middleware) unauthorized(ctx context.Context, w http.ResponseWriter, r 
 		}
 	}
 
-	redirectURL := m.client.AuthenticationRequestURL(session.State, oidc.ResponseModeFormPost)
+	redirectURL := m.client.AuthCodeURL(session.State, oauth2.AccessTypeOffline)
+	//redirectURL := m.client.AuthenticationRequestURL(session.State, oidc.ResponseModeFormPost)
 	if !m.redirect(r) {
 		m.unauthorizedResponse(ctx, w, redirectURL)
 		return

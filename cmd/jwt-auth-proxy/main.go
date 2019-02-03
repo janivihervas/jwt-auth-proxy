@@ -3,6 +3,8 @@ package main
 import (
 	"os"
 
+	"golang.org/x/oauth2"
+
 	"github.com/janivihervas/oidc-go/session/memory"
 
 	"github.com/janivihervas/oidc-go"
@@ -33,12 +35,12 @@ func main() {
 		panic(err)
 	}
 
-	m := middleware.New(oidc.Client{
+	m := middleware.New(&oauth2.Config{
 		ClientID:     config.AzureClientID,
 		ClientSecret: config.AzureClientSecret,
 		Endpoint:     azure.Endpoint(config.AzureTenant),
 		RedirectURL:  "http://localhost:3000/oauth2/callback",
-		Scope:        []string{oidc.ScopeOpenID, oidc.ScopeOfflineAccess},
+		Scopes:       []string{oidc.ScopeOpenID, oidc.ScopeOfflineAccess},
 	},
 		memory.New(),
 		upstream.Echo{},

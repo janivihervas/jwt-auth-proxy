@@ -4,11 +4,11 @@ import (
 	"net/http"
 	"strings"
 
+	"golang.org/x/oauth2"
+
 	"github.com/janivihervas/oidc-go/session"
 
 	"github.com/gorilla/securecookie"
-
-	"github.com/janivihervas/oidc-go"
 )
 
 const (
@@ -22,7 +22,7 @@ type redirectFunc func(r *http.Request) bool
 
 type middleware struct {
 	mux            *http.ServeMux
-	client         oidc.Client
+	client         *oauth2.Config
 	cookieStore    *securecookie.SecureCookie
 	sessionStorage session.Storage
 	next           http.Handler
@@ -33,7 +33,7 @@ func (m *middleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	m.mux.ServeHTTP(w, r)
 }
 
-func New(client oidc.Client, sessionStorage session.Storage, next http.Handler) http.Handler {
+func New(client *oauth2.Config, sessionStorage session.Storage, next http.Handler) http.Handler {
 	mux := http.NewServeMux()
 	m := &middleware{
 		mux:    mux,
