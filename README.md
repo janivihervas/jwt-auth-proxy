@@ -26,7 +26,7 @@ Features:
 Works the same way as [bitly/oauth2_proxy](https://github.com/bitly/oauth2_proxy) but with a few additions:
 
 - Refreshes access tokens.
-- Haves an option of **not** redirecting every request to OIDC/OAuth2 provider's login page. E.g. redirecting API calls with expired authentication from frontend login page doesn't work. Requests not redirected to the login page will receive a response with 401 or 403 as status code and a JSON with `redirectUrl` field so the frontend can redirect the browser itself. 
-- Redirects back to original url once authentication is renewed   
+- Haves an option of **not** redirecting every request to OIDC/OAuth2 provider's login page. E.g. redirecting API calls with expired authentication from frontend login page doesn't work. Requests not redirected to the login page will receive a response with 401 or 403 as status code and a JSON with `redirectUrl` field so the frontend can redirect the browser itself.
+- Redirects back to original url once authentication is renewed
 
 See [flow diagram](doc/flow-diagram.md) for details.
