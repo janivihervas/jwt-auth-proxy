@@ -1,12 +1,12 @@
-package middleware
+package authproxy
 
 import (
 	"context"
 	"net/http"
 
-	"github.com/janivihervas/jwt-auth-proxy/session"
+	"github.com/janivihervas/authproxy/session"
 
-	"github.com/janivihervas/jwt-auth-proxy/internal/random"
+	"github.com/janivihervas/authproxy/internal/random"
 	"github.com/pkg/errors"
 )
 

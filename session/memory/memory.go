@@ -5,7 +5,7 @@ import (
 	"context"
 	"sync"
 
-	"github.com/janivihervas/jwt-auth-proxy/session"
+	"github.com/janivihervas/authproxy/session"
 )
 
 // New creates a new in-memory session storage.

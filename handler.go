@@ -1,4 +1,4 @@
-package middleware
+package authproxy
 
 import (
 	"fmt"
@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	"github.com/davecgh/go-spew/spew"
-	"github.com/janivihervas/jwt-auth-proxy/jwt"
+	"github.com/janivihervas/authproxy/jwt"
 	"golang.org/x/oauth2"
 )
 

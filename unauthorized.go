@@ -1,4 +1,4 @@
-package middleware
+package authproxy
 
 import (
 	"context"
@@ -7,7 +7,7 @@ import (
 
 	"golang.org/x/oauth2"
 
-	"github.com/janivihervas/jwt-auth-proxy/internal/random"
+	"github.com/janivihervas/authproxy/internal/random"
 )
 
 func (m *Middleware) unauthorized(ctx context.Context, w http.ResponseWriter, r *http.Request) {

@@ -1,4 +1,4 @@
-package middleware
+package authproxy
 
 import (
 	"fmt"
@@ -6,7 +6,7 @@ import (
 	"regexp"
 
 	"github.com/gorilla/securecookie"
-	"github.com/janivihervas/jwt-auth-proxy/session"
+	"github.com/janivihervas/authproxy/session"
 	"golang.org/x/oauth2"
 
 	"github.com/pkg/errors"

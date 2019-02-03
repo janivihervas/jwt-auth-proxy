@@ -1,4 +1,4 @@
-module github.com/janivihervas/jwt-auth-proxy
+module github.com/janivihervas/authproxy
 
 require (
 	github.com/bradleyjkemp/cupaloy/v2 v2.4.0

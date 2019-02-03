@@ -1,4 +1,4 @@
-package middleware
+package authproxy
 
 //
 //func TestNewWithMockRedirect(t *testing.T) {

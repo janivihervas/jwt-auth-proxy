@@ -5,16 +5,6 @@ import (
 
 	"golang.org/x/oauth2"
 
-	"github.com/janivihervas/jwt-auth-proxy/session/memory"
-
-	oidc "github.com/janivihervas/jwt-auth-proxy"
-	"github.com/janivihervas/jwt-auth-proxy/azure"
-
-	"github.com/janivihervas/jwt-auth-proxy/middleware"
-
-	"github.com/janivihervas/jwt-auth-proxy/internal/server"
-
-	"github.com/janivihervas/jwt-auth-proxy/upstream"
 
 	"github.com/kelseyhightower/envconfig"
 	"github.com/subosito/gotenv"
@@ -35,7 +25,7 @@ func main() {
 		panic(err)
 	}
 
-	m := middleware.NewMiddleware(&oauth2.Config{
+	m := jwt_auth_proxy.NewMiddleware(&oauth2.Config{
 		ClientID:     config.AzureClientID,
 		ClientSecret: config.AzureClientSecret,
 		Endpoint:     azure.Endpoint(config.AzureTenant),
