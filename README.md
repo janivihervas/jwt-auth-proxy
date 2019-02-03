@@ -1,7 +1,9 @@
-# OpenID Connect library and middleware for Go
+# JWT authentication proxy
 
-[![CircleCI](https://circleci.com/gh/janivihervas/oidc-go.svg?style=svg)](https://circleci.com/gh/janivihervas/oidc-go)
-[![codecov](https://codecov.io/gh/janivihervas/oidc-go/branch/master/graph/badge.svg)](https://codecov.io/gh/janivihervas/oidc-go)
+**UNDER CONSTRUCTION, NOT READY TO BE USED YET**
+
+[![CircleCI](https://circleci.com/gh/janivihervas/jwt-auth-proxy.svg?style=svg)](https://circleci.com/gh/janivihervas/jwt-auth-proxy)
+[![codecov](https://codecov.io/gh/janivihervas/jwt-auth-proxy/branch/master/graph/badge.svg)](https://codecov.io/gh/janivihervas/jwt-auth-proxy)
 
 [![Go Report Card](https://goreportcard.com/badge/github.com/janivihervas/jwt-auth-proxy)](https://goreportcard.com/report/github.com/janivihervas/jwt-auth-proxy)
 [![GoDoc](https://godoc.org/github.com/janivihervas/jwt-auth-proxy?status.svg)](https://godoc.org/github.com/janivihervas/jwt-auth-proxy)
@@ -13,18 +15,18 @@
 
 Use cases:
 
-- As a library (like [golang.org/x/oauth2](https://godoc.org/golang.org/x/oauth2)) for requesting and validating JWT tokens
-- As a middleware for authenticating requests to your server
 - As a standalone application (reverse proxy) for authenticating requests to your application
+- As a Go middleware for authenticating requests to your server
 
 Features:
 
 - Validating JWT access tokens
 - Refreshing JWT access tokens with refresh tokens
 
-I used to use [bitly/oauth2_proxy](https://github.com/bitly/oauth2_proxy) as a reverse proxy, but I found it lacking in features. Mainly it was missing
+Works the same way as [bitly/oauth2_proxy](https://github.com/bitly/oauth2_proxy) but with a few additions:
 
-- refreshing access tokens,
-- having an option of **not** redirecting every request to OIDC/OAuth2 provider's login page. E.g. API calls with expired authentication from frontend are always redirected to login, where as they should return a forbidden response.
+- Refreshes access tokens.
+- Haves an option of **not** redirecting every request to OIDC/OAuth2 provider's login page. E.g. redirecting API calls with expired authentication from frontend login page doesn't work. Requests not redirected to the login page will receive a response with 401 or 403 as status code and a JSON with `redirectUrl` field so the frontend can redirect the browser itself. 
+- Redirects back to original url once authentication is renewed   
 
-See [flow diagram](doc/flow-diagram.md)
+See [flow diagram](doc/flow-diagram.md) for details.
