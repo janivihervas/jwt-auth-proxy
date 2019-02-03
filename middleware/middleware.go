@@ -2,11 +2,6 @@ package middleware
 
 import (
 	"net/http"
-	"regexp"
-
-	"golang.org/x/oauth2"
-
-	"github.com/janivihervas/oidc-go/session"
 
 	"github.com/gorilla/securecookie"
 )
@@ -31,34 +26,6 @@ func (m *Middleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	m.mux.ServeHTTP(w, r)
-}
-
-// Config for Middleware
-type Config struct {
-	// Next http.Handler
-	Next http.Handler
-	// AuthClient for handling authentication flow
-	AuthClient *oauth2.Config
-	// AuthenticationCallbackPath handles the authentication callback. E.g. /callback
-	AuthenticationCallbackPath string
-	// SessionStorage for persisting session state
-	SessionStorage session.Storage
-	// CookieHashKey for validating session cookie signature. It is recommended to use a key with 32 or 64 bytes.
-	CookieHashKey []byte
-	// CookieEncryptKey for encrypting session cookie, optional. Valid key lengths are 16, 24, or 32 bytes.
-	CookieEncryptKey []byte
-	// SkipAuthenticationRegex for skipping authentication on these paths
-	SkipAuthenticationRegex []string
-	// SkipRedirectToLoginRegex for skipping redirecting user to auth provider's login page.
-	// If a path matches one of these, a response with status code 401 or 403 with
-	// JSON with redirectUrl field will be returned. Use this to prevent the middleware redirecting
-	// API requests to the login page.
-	SkipRedirectToLoginRegex []string
-
-	mux                      *http.ServeMux
-	cookieStore              *securecookie.SecureCookie
-	skipAuthenticationRegex  []*regexp.Regexp
-	skipRedirectToLoginRegex []*regexp.Regexp
 }
 
 // NewMiddleware creates a new authentication middleware
