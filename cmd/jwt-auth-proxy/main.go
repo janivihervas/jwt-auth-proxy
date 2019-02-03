@@ -35,7 +35,7 @@ func main() {
 		panic(err)
 	}
 
-	m := middleware.New(&oauth2.Config{
+	m := middleware.NewMiddleware(&oauth2.Config{
 		ClientID:     config.AzureClientID,
 		ClientSecret: config.AzureClientSecret,
 		Endpoint:     azure.Endpoint(config.AzureTenant),

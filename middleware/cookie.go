@@ -1,13 +1,11 @@
 package middleware
 
 import (
-	"log"
 	"net/http"
 	"time"
 )
 
 func createAccessTokenCookie(accessToken string) *http.Cookie {
-	log.Println("create access token cookie")
 	return &http.Cookie{
 		Name:     accessTokenName,
 		Value:    accessToken,

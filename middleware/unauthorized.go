@@ -10,7 +10,7 @@ import (
 	"github.com/janivihervas/oidc-go/internal/random"
 )
 
-func (m *middleware) unauthorized(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+func (m *Middleware) unauthorized(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 	m.clearSessionAndAccessToken(ctx, w, r)
 
 	session, err := m.getSession(ctx, w, r, true)
@@ -19,9 +19,9 @@ func (m *middleware) unauthorized(ctx context.Context, w http.ResponseWriter, r 
 		return
 	}
 
-	if session.State == "" {
+	if session.AuthRequestState == "" {
 		state := random.String(32)
-		session.State = state
+		session.AuthRequestState = state
 
 		err = m.sessionStorage.Save(ctx, session.ID, session)
 		if err != nil {
@@ -30,8 +30,8 @@ func (m *middleware) unauthorized(ctx context.Context, w http.ResponseWriter, r 
 		}
 	}
 
-	redirectURL := m.client.AuthCodeURL(session.State, oauth2.AccessTypeOffline)
-	//redirectURL := m.client.AuthenticationRequestURL(session.State, oidc.ResponseModeFormPost)
+	redirectURL := m.authClient.AuthCodeURL(session.AuthRequestState, oauth2.AccessTypeOffline)
+	//redirectURL := m.authClient.AuthenticationRequestURL(session.AuthRequestState, oidc.ResponseModeFormPost)
 	if !m.redirect(r) {
 		m.unauthorizedResponse(ctx, w, redirectURL)
 		return
@@ -51,7 +51,7 @@ type unauthorizedResponse struct {
 	RedirectTo string `json:"redirectTo"`
 }
 
-func (m *middleware) unauthorizedResponse(ctx context.Context, w http.ResponseWriter, redirectURL string) {
+func (m *Middleware) unauthorizedResponse(ctx context.Context, w http.ResponseWriter, redirectURL string) {
 	resp := unauthorizedResponse{
 		StatusCode: http.StatusUnauthorized,
 		RedirectTo: redirectURL,

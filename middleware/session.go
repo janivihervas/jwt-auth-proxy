@@ -10,7 +10,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-func (m *middleware) getSession(ctx context.Context, w http.ResponseWriter, r *http.Request, createNew bool) (session.State, error) {
+func (m *Middleware) getSession(ctx context.Context, w http.ResponseWriter, r *http.Request, createNew bool) (session.State, error) {
 	var (
 		sessionID []byte
 	)
@@ -45,7 +45,7 @@ func (m *middleware) getSession(ctx context.Context, w http.ResponseWriter, r *h
 	return state, nil
 }
 
-func (m *middleware) createNewSession(ctx context.Context, w http.ResponseWriter) (session.State, error) {
+func (m *Middleware) createNewSession(ctx context.Context, w http.ResponseWriter) (session.State, error) {
 	newSession := session.State{
 		ID: random.Bytes(32),
 	}
@@ -65,7 +65,7 @@ func (m *middleware) createNewSession(ctx context.Context, w http.ResponseWriter
 	return newSession, nil
 }
 
-func (m *middleware) clearSessionAndAccessToken(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+func (m *Middleware) clearSessionAndAccessToken(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 	cookie := createAccessTokenCookie("")
 	cookie.MaxAge = -1
 	http.SetCookie(w, cookie)

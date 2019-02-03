@@ -3,7 +3,7 @@ package middleware
 //
 //func TestNewWithMockRedirect(t *testing.T) {
 //	p := &mock.Provider{}
-//	h := New(p, upstream.Echo{})
+//	h := NewMiddleware(p, upstream.Echo{})
 //	server := httptest.NewServer(h)
 //	defer server.Close()
 //
@@ -27,7 +27,7 @@ package middleware
 //			nonEmptyCookie,
 //			nonEmptyHeader,
 //		}
-//		p.ValidationError = errors.New("error")
+//		p.ValidationError = errors.NewMiddleware("error")
 //
 //		for i, req := range cases {
 //			resp, err := http.DefaultClient.Do(req)

@@ -8,10 +8,11 @@ import (
 
 // State of the current user
 type State struct {
-	ID           []byte
-	State        string
-	RefreshToken string
-	OriginalURL  string
+	ID               []byte
+	AuthRequestState string
+	AccessToken      string
+	RefreshToken     string
+	OriginalURL      string
 }
 
 var (
