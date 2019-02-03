@@ -6,7 +6,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/janivihervas/oidc-go/session"
+	"github.com/janivihervas/jwt-auth-proxy/session"
 )
 
 func TestMemory(t *testing.T) {

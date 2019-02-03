@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/janivihervas/oidc-go/internal/random"
-	"github.com/janivihervas/oidc-go/session"
+	"github.com/janivihervas/jwt-auth-proxy/internal/random"
+	"github.com/janivihervas/jwt-auth-proxy/session"
 
 	"github.com/pkg/errors"
 

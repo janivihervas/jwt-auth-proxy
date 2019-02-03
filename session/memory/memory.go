@@ -5,7 +5,7 @@ import (
 	"context"
 	"sync"
 
-	"github.com/janivihervas/oidc-go/session"
+	"github.com/janivihervas/jwt-auth-proxy/session"
 )
 
 // New creates a new in-memory session storage.

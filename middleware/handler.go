@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	"github.com/davecgh/go-spew/spew"
-	"github.com/janivihervas/oidc-go/jwt"
+	"github.com/janivihervas/jwt-auth-proxy/jwt"
 	"golang.org/x/oauth2"
 )
 
