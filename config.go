@@ -3,6 +3,7 @@ package authproxy
 import (
 	"fmt"
 	"net/http"
+	"net/url"
 	"regexp"
 
 	"github.com/gorilla/securecookie"
@@ -19,8 +20,6 @@ type Config struct {
 	Next http.Handler
 	// AuthClient for handling authentication flow
 	AuthClient *oauth2.Config
-	// AuthenticationCallbackPath handles the authentication callback. E.g. /callback
-	AuthenticationCallbackPath string
 	// SessionStorage for persisting session state
 	SessionStorage session.Storage
 	// CookieHashKey for validating session cookie signature. It is recommended to use a key with 32 or 64 bytes.
@@ -36,20 +35,28 @@ type Config struct {
 	SkipRedirectToLoginRegex []string
 
 	mux                      *http.ServeMux
+	callbackPath             string
 	cookieStore              *securecookie.SecureCookie
 	skipAuthenticationRegex  []*regexp.Regexp
 	skipRedirectToLoginRegex []*regexp.Regexp
 }
 
 // Valid returns a nil error if the config is valid
-func (c Config) Valid() error {
+func (c *Config) Valid() error {
+	if c == nil {
+		return errors.New("Config is nil")
+	}
 	var errorMsg string
 
 	if c.AuthClient == nil {
 		errorMsg = errorMsg + "AuthClient is nil\n"
-	}
-	if c.AuthenticationCallbackPath == "" || c.AuthenticationCallbackPath[0:] != "/" {
-		errorMsg = errorMsg + "AuthenticationCallbackPath is empty of missing \"/\" from the start: " + c.AuthenticationCallbackPath + "\n"
+	} else {
+		u, err := url.Parse(c.AuthClient.RedirectURL)
+		if err != nil {
+			errorMsg = errorMsg + "Can't parse AuthClient.RedirectURL:" + err.Error() + "\n"
+		} else {
+			c.callbackPath = u.Path
+		}
 	}
 	if c.SessionStorage == nil {
 		errorMsg = errorMsg + "SessionStorage is nil\n"

@@ -11,8 +11,13 @@ import (
 )
 
 func (m *Middleware) defaultHandler(w http.ResponseWriter, r *http.Request) {
-	// TODO: filter
 	log.Println("default", r.URL.String())
+	for _, regexp := range m.skipAuthenticationRegex {
+		if regexp.MatchString(r.URL.Path) {
+			m.Next.ServeHTTP(w, r)
+			return
+		}
+	}
 
 	var (
 		accessTokenStr string

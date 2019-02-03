@@ -29,7 +29,7 @@ func (m *Middleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 // NewMiddleware creates a new authentication middleware
-func NewMiddleware(config Config) (*Middleware, error) {
+func NewMiddleware(config *Config) (*Middleware, error) {
 	if err := config.Valid(); err != nil {
 		return nil, err
 	}
@@ -39,9 +39,9 @@ func NewMiddleware(config Config) (*Middleware, error) {
 	config.mux = mux
 
 	m := &Middleware{
-		Config: config,
+		Config: *config,
 	}
-	mux.HandleFunc("/oauth2/callback", m.authorizeCallback)
+	mux.HandleFunc(m.callbackPath, m.authorizeCallback)
 	mux.HandleFunc("/", m.defaultHandler)
 
 	return m, nil
