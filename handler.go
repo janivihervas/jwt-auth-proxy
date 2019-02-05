@@ -79,8 +79,8 @@ func (m *Middleware) unauthorized(ctx context.Context, w http.ResponseWriter, r 
 
 	authRequestState := random.String(32)
 	state.AuthRequestState = authRequestState
-	session.Values[sessionName] = state
 
+	session.Values[sessionName] = state
 	err = m.SessionStore.Save(r, w, session)
 	if err != nil {
 		m.Logger.Printf("couldn't save session: %+v", err)
@@ -103,6 +103,7 @@ func (m *Middleware) unauthorized(ctx context.Context, w http.ResponseWriter, r 
 		m.Logger.Printf("couldn't save session: %+v", err)
 	}
 
+	m.Logger.Println("redirecting to login page")
 	http.Redirect(w, r, redirectURL, http.StatusSeeOther)
 }
 
@@ -175,6 +176,7 @@ func (m *Middleware) authorizeCallback(w http.ResponseWriter, r *http.Request) {
 
 	// Clean previous state from session
 	state.AuthRequestState = ""
+
 	session.Values[sessionName] = state
 	err = m.SessionStore.Save(r, w, session)
 	if err != nil {
@@ -217,6 +219,7 @@ func (m *Middleware) authorizeCallback(w http.ResponseWriter, r *http.Request) {
 
 	// Clear previous redirect url from session
 	state.OriginalURL = ""
+
 	session.Values[sessionName] = state
 	err = m.SessionStore.Save(r, w, session)
 	if err != nil {

@@ -1,7 +1,10 @@
 package authproxy
 
 import (
+	"fmt"
 	"net/http"
+
+	"github.com/gorilla/sessions"
 )
 
 // Middleware for authentication requests
@@ -16,10 +19,15 @@ func (m *Middleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	err := m.setupAccessTokenAndSession(ctx, w, r)
 	if err != nil {
 		// Either access token is empty or couldn't create a session
-		m.Logger.Printf("%+v", err)
+		m.Logger.Printf("couldn't setup access token or session: %+v", err)
 	}
 
 	m.mux.ServeHTTP(w, r)
+	err = sessions.Save(r, w)
+	if err != nil {
+		m.Logger.Printf("couldn't save session: %+v", err)
+		http.Error(w, fmt.Sprintf("couldn't save session: %+v", err), http.StatusInternalServerError)
+	}
 }
 
 // NewMiddleware creates a new authentication middleware

@@ -1,6 +1,15 @@
 package main
 
 import (
+	"log"
+	"net/http"
+	"os"
+	"time"
+
+	"github.com/gorilla/handlers"
+
+	"github.com/boj/redistore"
+
 	"github.com/gorilla/sessions"
 	"github.com/janivihervas/authproxy"
 	"github.com/janivihervas/authproxy/azure"
@@ -9,20 +18,16 @@ import (
 	"github.com/kelseyhightower/envconfig"
 	"github.com/subosito/gotenv"
 	"golang.org/x/oauth2"
-	"log"
-	"net/http"
-	"os"
-	"time"
 )
 
 type Config struct {
 	AzureClientID     string `envconfig:"AZURE_AD_CLIENT_ID"`
 	AzureClientSecret string `envconfig:"AZURE_AD_CLIENT_SECRET"`
 	AzureTenant       string `envconfig:"AZURE_AD_TENANT"`
-	CookieHashKey string `envconfig:"COOKIE_HASH_KEY"`
-	CookieEncryptKey string `envconfig:"COOKIE_ENCRYPT_KEY"`
-	CallbackURL string `envconfig:"CALLBACK_URL"`
-	Port string `envconfig:"PORT"`
+	CookieHashKey     string `envconfig:"COOKIE_HASH_KEY"`
+	CookieEncryptKey  string `envconfig:"COOKIE_ENCRYPT_KEY"`
+	CallbackURL       string `envconfig:"CALLBACK_URL"`
+	Port              string `envconfig:"PORT"`
 }
 
 func main() {
@@ -34,13 +39,17 @@ func main() {
 		panic(err)
 	}
 
-	store := sessions.NewCookieStore([]byte(config.CookieHashKey), []byte(config.CookieEncryptKey))
+	//store := sessions.NewCookieStore([]byte(config.CookieHashKey), []byte(config.CookieEncryptKey))
+	store, err := redistore.NewRediStore(100, "tcp", ":6379", "", []byte(config.CookieHashKey), []byte(config.CookieEncryptKey))
+	if err != nil {
+		panic(err)
+	}
 	store.Options = &sessions.Options{
-    Path: "/",
-    MaxAge: int(time.Hour * 24 * 7),
-    Secure:false,
-    HttpOnly:true,
-    SameSite: http.SameSiteDefaultMode,
+		Path:     "/",
+		MaxAge:   int(time.Hour * 24 * 7),
+		Secure:   false,
+		HttpOnly: true,
+		SameSite: http.SameSiteDefaultMode,
 	}
 
 	m, err := authproxy.NewMiddleware(&authproxy.Config{
@@ -60,7 +69,7 @@ func main() {
 		panic(err)
 	}
 
-	err = server.RunHTTP(config.Port, m)
+	err = server.RunHTTP(config.Port, handlers.LoggingHandler(os.Stdout, m))
 	if err != nil {
 		panic(err)
 	}

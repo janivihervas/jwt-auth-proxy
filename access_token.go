@@ -63,17 +63,17 @@ func (m *Middleware) setupAccessTokenAndSession(ctx context.Context, w http.Resp
 		accessToken string
 	)
 
-	if s, err := m.getAccessTokenFromCookie(ctx, r); err != nil {
+	if s, err := m.getAccessTokenFromCookie(ctx, r); err == nil {
 		accessToken = s
 		cookieSet = true
 	}
 
-	if s, err := m.getAccessTokenFromHeader(ctx, r); err != nil {
+	if s, err := m.getAccessTokenFromHeader(ctx, r); err == nil {
 		accessToken = s
 		headerSet = true
 	}
 
-	if s, err := m.getAccessTokenFromSession(ctx, r); err != nil {
+	if s, err := m.getAccessTokenFromSession(ctx, r); err == nil {
 		accessToken = s
 		sessionSet = true
 	}
@@ -100,15 +100,15 @@ func (m *Middleware) setupAccessTokenAndSession(ctx context.Context, w http.Resp
 }
 
 func (m *Middleware) getAccessToken(ctx context.Context, r *http.Request) (string, error) {
-	if s, err := m.getAccessTokenFromCookie(ctx, r); err != nil {
+	if s, err := m.getAccessTokenFromCookie(ctx, r); err == nil {
 		return s, nil
 	}
 
-	if s, err := m.getAccessTokenFromHeader(ctx, r); err != nil {
+	if s, err := m.getAccessTokenFromHeader(ctx, r); err == nil {
 		return s, nil
 	}
 
-	if s, err := m.getAccessTokenFromSession(ctx, r); err != nil {
+	if s, err := m.getAccessTokenFromSession(ctx, r); err == nil {
 		return s, nil
 	}
 
