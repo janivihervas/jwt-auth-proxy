@@ -1,76 +1,73 @@
 package authproxy
 
-import (
-	"context"
-	"encoding/json"
-	"net/http"
-
-	"golang.org/x/oauth2"
-
-	"github.com/janivihervas/authproxy/internal/random"
-)
-
-func (m *Middleware) unauthorized(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-	m.clearSessionAndAccessToken(ctx, w, r)
-
-	session, err := m.getSession(ctx, w, r, true)
-	if err != nil {
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-		return
-	}
-
-	if session.AuthRequestState == "" {
-		state := random.String(32)
-		session.AuthRequestState = state
-
-		err = m.SessionStorage.Save(ctx, session.ID, session)
-		if err != nil {
-			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-			return
-		}
-	}
-
-	redirectURL := m.AuthClient.AuthCodeURL(session.AuthRequestState, oauth2.AccessTypeOffline)
-	// TODO
-	//if !m.redirect(r) {
-	//	m.unauthorizedResponse(ctx, w, redirectURL)
-	//	return
-	//}
-
-	session.OriginalURL = r.URL.String()
-	err = m.SessionStorage.Save(ctx, session.ID, session)
-	if err != nil {
-		// log err
-	}
-
-	http.Redirect(w, r, redirectURL, http.StatusSeeOther)
-}
-
-type unauthorizedResponse struct {
-	StatusCode int    `json:"statusCode"`
-	RedirectTo string `json:"redirectTo"`
-}
-
-func (m *Middleware) unauthorizedResponse(ctx context.Context, w http.ResponseWriter, redirectURL string) {
-	resp := unauthorizedResponse{
-		StatusCode: http.StatusUnauthorized,
-		RedirectTo: redirectURL,
-	}
-	w.WriteHeader(http.StatusUnauthorized)
-
-	b, err := json.Marshal(resp)
-	if err != nil {
-		w.Header().Set("Content-Type", "text/plain")
-		_, err = w.Write([]byte(redirectURL))
-		if err != nil {
-			// log err
-		}
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	_, err = w.Write(b)
-	if err != nil {
-		// log err
-	}
-}
+//func (m *Middleware) unauthorized(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+//	err := m.clearSessionAndAccessToken(ctx, w, r)
+//	if err != nil {
+//		m.Logger.Printf("%+v", err)
+//		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+//		return
+//	}
+//
+//	ctx = r.Context()
+//
+//	state, err := m.getStateFromContext(ctx)
+//	if err != nil {
+//		m.Logger.Printf("%+v", err)
+//		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+//		return
+//	}
+//
+//	newState := random.String(32)
+//	state.AuthRequestState = newState
+//
+//	err = m.SessionStore.Save(ctx, state.ID, state)
+//	if err != nil {
+//		m.Logger.Printf("%+v", err)
+//		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+//		return
+//	}
+//
+//	redirectURL := m.AuthClient.AuthCodeURL(state.AuthRequestState, oauth2.AccessTypeOffline)
+//	for _, regexp := range m.skipRedirectToLoginRegex {
+//		if regexp.MatchString(r.URL.Path) {
+//				m.unauthorizedResponse(ctx, w, redirectURL)
+//				return
+//		}
+//	}
+//
+//	state.OriginalURL = r.URL.String()
+//	err = m.SessionStore.Save(ctx, state.ID, state)
+//	if err != nil {
+//		m.Logger.Printf("%+v", err)
+//		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+//		return
+//	}
+//
+//	http.Redirect(w, r, redirectURL, http.StatusSeeOther)
+//}
+//
+//type unauthorizedResponse struct {
+//	StatusCode  int    `json:"statusCode"`
+//	RedirectURL string `json:"redirectURL"`
+//}
+//
+//func (m *Middleware) unauthorizedResponse(ctx context.Context, w http.ResponseWriter, redirectURL string) {
+//	resp := unauthorizedResponse{
+//		StatusCode:  http.StatusUnauthorized,
+//		RedirectURL: redirectURL,
+//	}
+//	w.WriteHeader(http.StatusUnauthorized)
+//
+//	w.Header().Set("Content-Type", "application/json")
+//	encoder := json.NewEncoder(w)
+//	encoder.SetEscapeHTML(false)
+//
+//	err := encoder.Encode(resp)
+//	if err != nil {
+//		w.Header().Set("Content-Type", "text/plain")
+//		_, err = w.Write([]byte(redirectURL))
+//		if err != nil {
+//			// log err
+//		}
+//	}
+//}

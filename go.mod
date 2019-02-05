@@ -2,8 +2,8 @@ module github.com/janivihervas/authproxy
 
 require (
 	github.com/bradleyjkemp/cupaloy/v2 v2.4.0
-	github.com/davecgh/go-spew v1.1.1
 	github.com/gorilla/securecookie v1.1.1
+	github.com/gorilla/sessions v1.1.3
 	github.com/kelseyhightower/envconfig v1.3.0
 	github.com/pkg/errors v0.8.1
 	github.com/stretchr/testify v1.3.0

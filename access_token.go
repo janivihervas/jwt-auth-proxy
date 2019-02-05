@@ -5,52 +5,52 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/janivihervas/authproxy/internal/random"
-	"github.com/janivihervas/authproxy/session"
-
 	"github.com/pkg/errors"
-
-	"golang.org/x/oauth2"
 )
 
-func (m *Middleware) getAccessTokenFromCookie(ctx context.Context, r *http.Request) string {
-	cookie, err := r.Cookie(accessTokenName)
-	if err != nil || cookie.Value == "" {
-		return ""
+const (
+	accessTokenCookieName = "access_token"
+	authHeaderName        = "Authorization"
+	authHeaderPrefix      = "Bearer"
+)
+
+func (m *Middleware) getAccessTokenFromCookie(ctx context.Context, r *http.Request) (string, error) {
+	cookie, err := r.Cookie(accessTokenCookieName)
+	if err != nil {
+		return "", errors.Wrapf(err, "couldn't get cookie %s", accessTokenCookieName)
+	}
+	if cookie.Value == "" {
+		return "", errors.Errorf("cookie %s is empty", accessTokenCookieName)
 	}
 
-	return cookie.Value
+	return cookie.Value, nil
 }
 
-func (m *Middleware) getAccessTokenFromHeader(ctx context.Context, r *http.Request) string {
+func (m *Middleware) getAccessTokenFromHeader(ctx context.Context, r *http.Request) (string, error) {
 	header := r.Header.Get(authHeaderName)
+	if header == "" {
+		return "", errors.Errorf("header %s is empty", authHeaderName)
+	}
 	parts := strings.Split(header, " ")
 	if len(parts) != 2 || parts[0] != authHeaderPrefix || parts[1] == "" {
-		return ""
+		return "", errors.Errorf("header %s is malformed: %s", authHeaderName, header)
 	}
 
-	return parts[1]
+	return parts[1], nil
 }
 
-func (m *Middleware) getAccessTokenFromSession(ctx context.Context, r *http.Request) string {
-	var sessionID []byte
-
-	cookie, err := r.Cookie(sessionCookieName)
-	if err != nil || cookie.Value == "" {
-		return ""
-	}
-
-	err = m.cookieStore.Decode(sessionCookieName, cookie.Value, &sessionID)
+func (m *Middleware) getAccessTokenFromSession(ctx context.Context, r *http.Request) (string, error) {
+	session, err := m.SessionStore.Get(r, sessionName)
 	if err != nil {
-		return ""
+		return "", errors.Wrapf(err, "couldn't get session %s", sessionName)
 	}
 
-	state, err := m.SessionStorage.Get(ctx, sessionID)
-	if err != nil || state.AccessToken == "" {
-		return ""
+	state, ok := session.Values[sessionName].(State)
+	if !ok {
+		return "", errors.Errorf("couldn't type case session %s", sessionName)
 	}
 
-	return state.AccessToken
+	return state.AccessToken, nil
 }
 
 func (m *Middleware) setupAccessTokenAndSession(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
@@ -61,24 +61,23 @@ func (m *Middleware) setupAccessTokenAndSession(ctx context.Context, w http.Resp
 		accessToken string
 	)
 
-	if s := m.getAccessTokenFromCookie(ctx, r); s != "" {
+	if s, err := m.getAccessTokenFromCookie(ctx, r); err != nil {
 		accessToken = s
 		cookieSet = true
 	}
 
-	if s := m.getAccessTokenFromHeader(ctx, r); s != "" {
+	if s, err := m.getAccessTokenFromHeader(ctx, r); err != nil {
 		accessToken = s
 		headerSet = true
 	}
 
-	if s := m.getAccessTokenFromSession(ctx, r); s != "" {
+	if s, err := m.getAccessTokenFromSession(ctx, r); err != nil {
 		accessToken = s
 		sessionSet = true
 	}
 
 	if accessToken == "" {
-		// TODO: what now?
-		return nil
+		return errors.New("access token is not set")
 	}
 
 	if !cookieSet {
@@ -89,75 +88,60 @@ func (m *Middleware) setupAccessTokenAndSession(ctx context.Context, w http.Resp
 	if !headerSet {
 		r.Header.Set(authHeaderName, authHeaderPrefix+" "+accessToken)
 	}
+
+	// Always create the session so the next handlers don't need to do it
 	if !sessionSet {
-		state := session.State{
-			ID:          random.Bytes(32),
-			AccessToken: accessToken,
-		}
-
-		value, err := m.cookieStore.Encode(sessionCookieName, state.ID)
-		if err != nil {
-			return errors.Wrap(err, "middleware: couldn't encode session ID")
-		}
-
-		err = m.SessionStorage.Save(ctx, state.ID, state)
-		if err != nil {
-			return errors.Wrap(err, "middleware: couldn't save session to storage")
-		}
-
-		sessionCookie := createSessionCookie(value)
-		http.SetCookie(w, sessionCookie)
-		r.AddCookie(sessionCookie)
+		return errors.Wrap(m.createNewSession(ctx, accessToken, w, r), "couldn't create new session")
 	}
 
 	return nil
 }
 
 func (m *Middleware) getAccessToken(ctx context.Context, r *http.Request) (string, error) {
-	if s := m.getAccessTokenFromCookie(ctx, r); s != "" {
+	if s, err := m.getAccessTokenFromCookie(ctx, r); err != nil {
 		return s, nil
 	}
 
-	if s := m.getAccessTokenFromHeader(ctx, r); s != "" {
+	if s, err := m.getAccessTokenFromHeader(ctx, r); err != nil {
 		return s, nil
 	}
 
-	if s := m.getAccessTokenFromSession(ctx, r); s != "" {
+	if s, err := m.getAccessTokenFromSession(ctx, r); err != nil {
 		return s, nil
 	}
 
-	return "", errors.New("middleware: no access token in cookie, header or session")
+	return "", errors.New("no access token in cookie, header or session")
 }
 
-func (m *Middleware) refreshAccessToken(ctx context.Context, w http.ResponseWriter, r *http.Request) string {
-	session, err := m.getSession(ctx, w, r, true)
-	if err != nil {
-		return ""
-	}
-
-	if session.RefreshToken == "" {
-		return ""
-	}
-
-	accessToken, _ := m.getAccessToken(ctx, r)
-
-	tokens, err := m.AuthClient.TokenSource(r.Context(), &oauth2.Token{
-		AccessToken:  accessToken,
-		RefreshToken: session.RefreshToken,
-	}).Token()
-	if err != nil {
-		return ""
-	}
-
-	if tokens.RefreshToken != "" {
-		session.RefreshToken = tokens.RefreshToken
-	}
-
-	http.SetCookie(w, createAccessTokenCookie(tokens.AccessToken))
-	err = m.SessionStorage.Save(ctx, session.ID, session)
-	if err != nil {
-		// log error
-	}
-
-	return tokens.AccessToken
-}
+//
+//func (m *Middleware) refreshAccessToken(ctx context.Context, w http.ResponseWriter, r *http.Request) string {
+//	state, err := m.getStateFromContext(ctx)
+//	if err != nil {
+//		return ""
+//	}
+//
+//	if state.RefreshToken == "" {
+//		return ""
+//	}
+//
+//	tokens, err := m.AuthClient.TokenSource(r.Context(), &oauth2.Token{
+//		AccessToken:  state.AccessToken,
+//		RefreshToken: state.RefreshToken,
+//	}).Token()
+//	if err != nil {
+//		return ""
+//	}
+//
+//	if tokens.RefreshToken != "" {
+//		state.RefreshToken = tokens.RefreshToken
+//	}
+//	state.AccessToken = tokens.AccessToken
+//
+//	http.SetCookie(w, createAccessTokenCookie(tokens.AccessToken))
+//	err = m.SessionStore.Save(ctx, state.ID, state)
+//	if err != nil {
+//		// log error
+//	}
+//
+//	return tokens.AccessToken
+//}

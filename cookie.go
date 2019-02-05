@@ -7,7 +7,7 @@ import (
 
 func createAccessTokenCookie(accessToken string) *http.Cookie {
 	return &http.Cookie{
-		Name:     accessTokenName,
+		Name:     accessTokenCookieName,
 		Value:    accessToken,
 		Path:     "/",
 		HttpOnly: true,
@@ -19,7 +19,7 @@ func createAccessTokenCookie(accessToken string) *http.Cookie {
 
 func createSessionCookie(sessionID string) *http.Cookie {
 	return &http.Cookie{
-		Name:     sessionCookieName,
+		Name:     sessionName,
 		Value:    sessionID,
 		Path:     "/",
 		HttpOnly: true,

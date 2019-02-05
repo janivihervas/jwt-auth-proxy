@@ -2,13 +2,14 @@ package authproxy
 
 import (
 	"fmt"
+	"github.com/gorilla/sessions"
+	"io/ioutil"
+	"log"
 	"net/http"
 	"net/url"
 	"regexp"
 
 	"github.com/gorilla/securecookie"
-	"github.com/janivihervas/authproxy/session"
-
 	"golang.org/x/oauth2"
 
 	"github.com/pkg/errors"
@@ -20,12 +21,8 @@ type Config struct {
 	Next http.Handler
 	// AuthClient for handling authentication flow
 	AuthClient *oauth2.Config
-	// SessionStorage for persisting session state
-	SessionStorage session.Storage
-	// CookieHashKey for validating session cookie signature. It is recommended to use a key with 32 or 64 bytes.
-	CookieHashKey []byte
-	// CookieEncryptKey for encrypting session cookie, optional. Valid key lengths are 16, 24, or 32 bytes.
-	CookieEncryptKey []byte
+	// SessionStore for persisting session state
+	SessionStore sessions.Store
 	// SkipAuthenticationRegex for skipping authentication on these paths
 	SkipAuthenticationRegex []string
 	// SkipRedirectToLoginRegex for skipping redirecting user to auth provider's login page.
@@ -33,6 +30,9 @@ type Config struct {
 	// JSON with redirectUrl field will be returned. Use this to prevent the middleware redirecting
 	// API requests to the login page.
 	SkipRedirectToLoginRegex []string
+
+	// Logger
+	Logger *log.Logger
 
 	mux                      *http.ServeMux
 	callbackPath             string
@@ -58,11 +58,8 @@ func (c *Config) Valid() error {
 			c.callbackPath = u.Path
 		}
 	}
-	if c.SessionStorage == nil {
-		errorMsg = errorMsg + "SessionStorage is nil\n"
-	}
-	if c.CookieHashKey == nil || len(c.CookieHashKey) == 0 {
-		errorMsg = errorMsg + "CookieHashKey is empty\n"
+	if c.SessionStore == nil {
+		errorMsg = errorMsg + "SessionStore is nil\n"
 	}
 	for i, s := range c.SkipAuthenticationRegex {
 		r, err := regexp.Compile(s)
@@ -80,6 +77,10 @@ func (c *Config) Valid() error {
 		} else {
 			c.skipRedirectToLoginRegex = append(c.skipRedirectToLoginRegex, r)
 		}
+	}
+
+	if c.Logger == nil {
+		c.Logger = log.New(ioutil.Discard, "", log.LstdFlags)
 	}
 
 	if errorMsg != "" {

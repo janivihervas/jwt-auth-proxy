@@ -2,15 +2,6 @@ package authproxy
 
 import (
 	"net/http"
-
-	"github.com/gorilla/securecookie"
-)
-
-const (
-	accessTokenName   = "access_token"
-	authHeaderName    = "Authorization"
-	authHeaderPrefix  = "Bearer"
-	sessionCookieName = "oidc_session"
 )
 
 // Middleware for authentication requests
@@ -20,11 +11,14 @@ type Middleware struct {
 
 // ServeHTTP will authenticate the request and forward it to the next http.Handler
 func (m *Middleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	err := m.setupAccessTokenAndSession(r.Context(), w, r)
+	ctx := r.Context()
+
+	err := m.setupAccessTokenAndSession(ctx, w, r)
 	if err != nil {
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-		return
+		// Either access token is empty or couldn't create a session
+		m.Logger.Printf("%+v", err)
 	}
+
 	m.mux.ServeHTTP(w, r)
 }
 
@@ -35,7 +29,6 @@ func NewMiddleware(config *Config) (*Middleware, error) {
 	}
 
 	mux := http.NewServeMux()
-	config.cookieStore = securecookie.New(config.CookieHashKey, config.CookieEncryptKey)
 	config.mux = mux
 
 	m := &Middleware{

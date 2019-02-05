@@ -14,7 +14,7 @@ package authproxy
 //		nonEmptyCookie, err := http.NewRequest(http.MethodGet, server.URL, nil)
 //		assert.NoError(t, err)
 //		nonEmptyCookie.AddCookie(&http.Cookie{
-//			Name:  accessTokenName,
+//			Name:  accessTokenCookieName,
 //			Value: "foo",
 //		})
 //
