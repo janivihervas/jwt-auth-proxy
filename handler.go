@@ -47,6 +47,7 @@ func (m *Middleware) defaultHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if validationErr != nil {
+		m.Logger.Printf("couldn't validate access token, unauthorized: %+v", validationErr)
 		m.unauthorized(ctx, w, r)
 		return
 	}
@@ -78,6 +79,7 @@ func (m *Middleware) unauthorized(ctx context.Context, w http.ResponseWriter, r 
 
 	authRequestState := random.String(32)
 	state.AuthRequestState = authRequestState
+	session.Values[sessionName] = state
 
 	err = m.SessionStore.Save(r, w, session)
 	if err != nil {
@@ -95,6 +97,7 @@ func (m *Middleware) unauthorized(ctx context.Context, w http.ResponseWriter, r 
 	}
 
 	state.OriginalURL = r.URL.String()
+	session.Values[sessionName] = state
 	err = m.SessionStore.Save(r, w, session)
 	if err != nil {
 		m.Logger.Printf("couldn't save session: %+v", err)
@@ -172,6 +175,7 @@ func (m *Middleware) authorizeCallback(w http.ResponseWriter, r *http.Request) {
 
 	// Clean previous state from session
 	state.AuthRequestState = ""
+	session.Values[sessionName] = state
 	err = m.SessionStore.Save(r, w, session)
 	if err != nil {
 		m.Logger.Printf("couldn't save session: %+v", err)
@@ -203,6 +207,7 @@ func (m *Middleware) authorizeCallback(w http.ResponseWriter, r *http.Request) {
 		state.RefreshToken = tokens.RefreshToken
 	}
 
+	session.Values[sessionName] = state
 	err = m.SessionStore.Save(r, w, session)
 	if err != nil {
 		m.Logger.Printf("couldn't save session: %+v", err)
@@ -212,6 +217,7 @@ func (m *Middleware) authorizeCallback(w http.ResponseWriter, r *http.Request) {
 
 	// Clear previous redirect url from session
 	state.OriginalURL = ""
+	session.Values[sessionName] = state
 	err = m.SessionStore.Save(r, w, session)
 	if err != nil {
 		m.Logger.Printf("couldn't save session: %+v", err)
