@@ -19,7 +19,7 @@ func (m *Middleware) defaultHandler(w http.ResponseWriter, r *http.Request) {
 	//
 	//accessTokenStr, err := m.getAccessToken(ctx, r)
 	//if err != nil {
-	//	accessTokenStr = m.refreshAccessToken(ctx, w, r)
+	//	accessTokenStr, err = m.refreshAccessToken(ctx, w, r)
 	//}
 	//
 	//var validationErr error

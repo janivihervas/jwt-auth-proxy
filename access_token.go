@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"strings"
 
+	"golang.org/x/oauth2"
+
 	"github.com/pkg/errors"
 )
 
@@ -113,35 +115,39 @@ func (m *Middleware) getAccessToken(ctx context.Context, r *http.Request) (strin
 	return "", errors.New("no access token in cookie, header or session")
 }
 
-//
-//func (m *Middleware) refreshAccessToken(ctx context.Context, w http.ResponseWriter, r *http.Request) string {
-//	state, err := m.getStateFromContext(ctx)
-//	if err != nil {
-//		return ""
-//	}
-//
-//	if state.RefreshToken == "" {
-//		return ""
-//	}
-//
-//	tokens, err := m.AuthClient.TokenSource(r.Context(), &oauth2.Token{
-//		AccessToken:  state.AccessToken,
-//		RefreshToken: state.RefreshToken,
-//	}).Token()
-//	if err != nil {
-//		return ""
-//	}
-//
-//	if tokens.RefreshToken != "" {
-//		state.RefreshToken = tokens.RefreshToken
-//	}
-//	state.AccessToken = tokens.AccessToken
-//
-//	http.SetCookie(w, createAccessTokenCookie(tokens.AccessToken))
-//	err = m.SessionStore.Save(ctx, state.ID, state)
-//	if err != nil {
-//		// log error
-//	}
-//
-//	return tokens.AccessToken
-//}
+func (m *Middleware) refreshAccessToken(ctx context.Context, w http.ResponseWriter, r *http.Request) (string, error) {
+	session, err := m.SessionStore.Get(r, sessionName)
+	if err != nil {
+		return "", errors.Wrapf(err, "couldn't get session %s", sessionName)
+	}
+
+	state, ok := session.Values[sessionName].(State)
+	if !ok {
+		return "", errors.Errorf("couldn't type cast session %s", err)
+	}
+
+	if state.RefreshToken == "" {
+		return "", errors.New("no refresh token in session")
+	}
+
+	tokens, err := m.AuthClient.TokenSource(r.Context(), &oauth2.Token{
+		AccessToken:  state.AccessToken,
+		RefreshToken: state.RefreshToken,
+	}).Token()
+	if err != nil {
+		return "", errors.Wrap(err, "couldn't refresh tokens")
+	}
+
+	if tokens.RefreshToken != "" {
+		state.RefreshToken = tokens.RefreshToken
+	}
+	state.AccessToken = tokens.AccessToken
+
+	session.Values[sessionName] = state
+	err = session.Save(r, w)
+	if err != nil {
+		return state.AccessToken, errors.New("couldn't save session")
+	}
+
+	return state.AccessToken, nil
+}
