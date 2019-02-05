@@ -3,6 +3,7 @@ package authproxy
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/janivihervas/authproxy/internal/random"
@@ -129,80 +130,97 @@ func (m *Middleware) unauthorizedResponse(ctx context.Context, w http.ResponseWr
 }
 
 func (m *Middleware) authorizeCallback(w http.ResponseWriter, r *http.Request) {
-	//if r.Method != http.MethodGet {
-	//	http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
-	//	return
-	//}
-	//
-	//var (
-	//	ctx      = r.Context()
-	//	code     = r.URL.Query().Get("code")
-	//	stateNew = r.URL.Query().Get("state")
-	//)
-	//
-	//if code == "" {
-	//	http.Error(w, "no code in response", http.StatusBadRequest)
-	//	return
-	//}
-	//
-	//if stateNew == "" {
-	//	http.Error(w, "no state in response", http.StatusBadRequest)
-	//	return
-	//}
-	//
-	//state, err := m.getStateFromContext(ctx)
-	//if err != nil {
-	//	m.Logger.Printf("%+v", err)
-	//	http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-	//	return
-	//}
-	//
-	//stateOld := state.AuthRequestState
-	//
-	//// Clean previous state from session
-	//state.AuthRequestState = ""
-	//err = m.SessionStore.Save(ctx, state.ID, state)
-	//if err != nil {
-	//	m.Logger.Printf("%+v", err)
-	//	http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-	//	return
-	//}
-	//
-	//if stateNew != stateOld {
-	//	http.Error(w, fmt.Sprintf("states are not the same: %s != %s", stateNew, stateOld), http.StatusBadRequest)
-	//	return
-	//}
-	//
-	//tokens, err := m.AuthClient.Exchange(ctx, code, oauth2.AccessTypeOffline)
-	//if err != nil {
-	//	m.Logger.Printf("%+v", err)
-	//	http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
-	//	return
-	//}
-	//
-	//state.RefreshToken = tokens.RefreshToken
-	//err = m.SessionStore.Save(ctx, state.ID, state)
-	//if err != nil {
-	//	m.Logger.Printf("%+v", err)
-	//	http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-	//	return
-	//}
-	//
-	//http.SetCookie(w, createAccessTokenCookie(tokens.AccessToken))
-	//
-	//url := state.OriginalURL
-	//
-	//// Clear previous redirect url from session
-	//state.OriginalURL = ""
-	//err = m.SessionStore.Save(ctx, state.ID, state)
-	//if err != nil {
-	//	m.Logger.Printf("%+v", err)
-	//	http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-	//}
-	//
-	//if url == "" {
-	//	url = "/"
-	//}
-	//
-	//http.Redirect(w, r, url, http.StatusSeeOther)
+	if r.Method != http.MethodGet {
+		m.Logger.Printf("received non-GET request to authorize callback: %s", r.Method)
+		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
+		return
+	}
+
+	var (
+		ctx      = r.Context()
+		code     = r.URL.Query().Get("code")
+		stateNew = r.URL.Query().Get("state")
+	)
+
+	if code == "" {
+		m.Logger.Println("no code in authorize callback")
+		http.Error(w, "no code in request query", http.StatusBadRequest)
+		return
+	}
+
+	if stateNew == "" {
+		m.Logger.Println("no state in authorize callback")
+		http.Error(w, "no state in request query", http.StatusBadRequest)
+		return
+	}
+
+	session, err := m.SessionStore.Get(r, sessionName)
+	if err != nil {
+		m.Logger.Printf("couldn't get session: %+v", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	state, ok := session.Values[sessionName].(State)
+	if !ok {
+		m.Logger.Println("couldn't type cast session")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	stateOld := state.AuthRequestState
+
+	// Clean previous state from session
+	state.AuthRequestState = ""
+	err = m.SessionStore.Save(r, w, session)
+	if err != nil {
+		m.Logger.Printf("couldn't save session: %+v", err)
+	}
+
+	if stateNew != stateOld {
+		http.Error(w, fmt.Sprintf("states are not the same: %s != %s", stateNew, stateOld), http.StatusBadRequest)
+		return
+	}
+
+	tokens, err := m.AuthClient.Exchange(ctx, code, oauth2.AccessTypeOffline)
+	if err != nil {
+		m.Logger.Printf("couldn't exchange authorization code for tokens: %+v", err)
+		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		return
+	}
+
+	_, err = jwt.ParseAccessToken(ctx, tokens.AccessToken)
+	if err != nil {
+		m.Logger.Println("access token from exchange was invalid")
+		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		return
+	}
+
+	state.AccessToken = tokens.AccessToken
+	http.SetCookie(w, createAccessTokenCookie(tokens.AccessToken))
+
+	if tokens.RefreshToken != "" {
+		state.RefreshToken = tokens.RefreshToken
+	}
+
+	err = m.SessionStore.Save(r, w, session)
+	if err != nil {
+		m.Logger.Printf("couldn't save session: %+v", err)
+	}
+
+	url := state.OriginalURL
+
+	// Clear previous redirect url from session
+	state.OriginalURL = ""
+	err = m.SessionStore.Save(r, w, session)
+	if err != nil {
+		m.Logger.Printf("couldn't save session: %+v", err)
+	}
+
+	if url == "" {
+		url = "/"
+	}
+
+	m.Logger.Printf("redirecting to %s", url)
+	http.Redirect(w, r, url, http.StatusSeeOther)
 }
