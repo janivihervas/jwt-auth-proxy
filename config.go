@@ -27,12 +27,12 @@ type Config struct {
 	// SkipAuthenticationRegex for skipping authentication on these paths
 	SkipAuthenticationRegex []string
 	// SkipRedirectToLoginRegex for skipping redirecting user to auth provider's login page.
-	// If a path matches one of these, a response with status code 401 or 403 with
+	// If a path matches one of these, a response with status code 401 with
 	// JSON with redirectUrl field will be returned. Use this to prevent the middleware redirecting
 	// API requests to the login page.
 	SkipRedirectToLoginRegex []string
 
-	// Logger
+	// Logger, optional
 	Logger *log.Logger
 
 	mux                      *http.ServeMux
