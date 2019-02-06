@@ -2,11 +2,12 @@ package authproxy
 
 import (
 	"fmt"
+	"io/ioutil"
+	"log"
 	"net/http"
 	"regexp"
 
-	"github.com/gorilla/securecookie"
-	"github.com/janivihervas/authproxy/session"
+	"github.com/gorilla/sessions"
 
 	"golang.org/x/oauth2"
 
@@ -17,45 +18,46 @@ import (
 type Config struct {
 	// Next http.Handler
 	Next http.Handler
+	// CallbackPath to handle authorization callback
+	CallbackPath string
 	// AuthClient for handling authentication flow
 	AuthClient *oauth2.Config
-	// AuthenticationCallbackPath handles the authentication callback. E.g. /callback
-	AuthenticationCallbackPath string
-	// SessionStorage for persisting session state
-	SessionStorage session.Storage
-	// CookieHashKey for validating session cookie signature. It is recommended to use a key with 32 or 64 bytes.
-	CookieHashKey []byte
-	// CookieEncryptKey for encrypting session cookie, optional. Valid key lengths are 16, 24, or 32 bytes.
-	CookieEncryptKey []byte
+	// SessionStore for persisting session state
+	SessionStore sessions.Store
 	// SkipAuthenticationRegex for skipping authentication on these paths
 	SkipAuthenticationRegex []string
 	// SkipRedirectToLoginRegex for skipping redirecting user to auth provider's login page.
-	// If a path matches one of these, a response with status code 401 or 403 with
+	// If a path matches one of these, a response with status code 401 with
 	// JSON with redirectUrl field will be returned. Use this to prevent the middleware redirecting
 	// API requests to the login page.
 	SkipRedirectToLoginRegex []string
 
+	// Logger, optional
+	Logger *log.Logger
+
 	mux                      *http.ServeMux
-	cookieStore              *securecookie.SecureCookie
 	skipAuthenticationRegex  []*regexp.Regexp
 	skipRedirectToLoginRegex []*regexp.Regexp
 }
 
 // Valid returns a nil error if the config is valid
-func (c Config) Valid() error {
+func (c *Config) Valid() error {
+	if c == nil {
+		return errors.New("Config is nil")
+	}
 	var errorMsg string
 
+	if c.CallbackPath == "" {
+		errorMsg = errorMsg + "CallbackPath is empty\n"
+	}
+	if c.CallbackPath == "/" {
+		errorMsg = errorMsg + "CallbackPath is can't be '/'\n"
+	}
 	if c.AuthClient == nil {
 		errorMsg = errorMsg + "AuthClient is nil\n"
 	}
-	if c.AuthenticationCallbackPath == "" || c.AuthenticationCallbackPath[0:] != "/" {
-		errorMsg = errorMsg + "AuthenticationCallbackPath is empty of missing \"/\" from the start: " + c.AuthenticationCallbackPath + "\n"
-	}
-	if c.SessionStorage == nil {
-		errorMsg = errorMsg + "SessionStorage is nil\n"
-	}
-	if c.CookieHashKey == nil || len(c.CookieHashKey) == 0 {
-		errorMsg = errorMsg + "CookieHashKey is empty\n"
+	if c.SessionStore == nil {
+		errorMsg = errorMsg + "SessionStore is nil\n"
 	}
 	for i, s := range c.SkipAuthenticationRegex {
 		r, err := regexp.Compile(s)
@@ -75,8 +77,12 @@ func (c Config) Valid() error {
 		}
 	}
 
+	if c.Logger == nil {
+		c.Logger = log.New(ioutil.Discard, "", log.LstdFlags)
+	}
+
 	if errorMsg != "" {
-		return errors.New("Config is not valid:\n\n" + errorMsg)
+		return errors.New("config is not valid:\n\n" + errorMsg)
 	}
 
 	return nil

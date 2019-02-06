@@ -1,0 +1,8 @@
+config is not valid:
+
+CallbackPath is empty
+AuthClient is nil
+SessionStore is nil
+SkipAuthenticationRegex[0] ("[") is invalid regex: error parsing regexp: missing closing ]: `[`
+SkipRedirectToLoginRegex[0] ("[") is invalid regex: error parsing regexp: missing closing ]: `[`
+
