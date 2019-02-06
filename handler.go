@@ -15,6 +15,7 @@ import (
 func (m *Middleware) defaultHandler(w http.ResponseWriter, r *http.Request) {
 	for _, regexp := range m.skipAuthenticationRegex {
 		if regexp.MatchString(r.URL.Path) {
+			m.Logger.Printf("path %s matched regexp %s, skipping authentication", r.URL.Path, regexp.String())
 			m.Next.ServeHTTP(w, r)
 			return
 		}
@@ -91,6 +92,7 @@ func (m *Middleware) unauthorized(ctx context.Context, w http.ResponseWriter, r 
 	redirectURL := m.AuthClient.AuthCodeURL(state.AuthRequestState, oauth2.AccessTypeOffline)
 	for _, regexp := range m.skipRedirectToLoginRegex {
 		if regexp.MatchString(r.URL.Path) {
+			m.Logger.Printf("path %s matched regexp %s, skipping redirection to login page", r.URL.Path, regexp.String())
 			m.unauthorizedResponse(ctx, w, redirectURL)
 			return
 		}
@@ -125,10 +127,11 @@ func (m *Middleware) unauthorizedResponse(ctx context.Context, w http.ResponseWr
 
 	err := encoder.Encode(resp)
 	if err != nil {
+		m.Logger.Printf("writing json for unauthorized response failed, falling back to plain text: %+v", err)
 		w.Header().Set("Content-Type", "text/plain")
 		_, err = w.Write([]byte(redirectURL))
 		if err != nil {
-			m.Logger.Printf("falling back to plain text response failed: %+v", err)
+			m.Logger.Printf("writing plain text for unauthorized response failed: %+v", err)
 		}
 	}
 }

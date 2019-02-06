@@ -27,6 +27,7 @@ type config struct {
 	CookieHashKey     string `envconfig:"COOKIE_HASH_KEY"`
 	CookieEncryptKey  string `envconfig:"COOKIE_ENCRYPT_KEY"`
 	CallbackURL       string `envconfig:"CALLBACK_URL"`
+	CallbackPath      string `envconfig:"CALLBACK_PATH"`
 	Port              string `envconfig:"PORT"`
 }
 
@@ -61,7 +62,9 @@ func main() {
 			Scopes:       []string{authproxy.ScopeOpenID, authproxy.ScopeOfflineAccess},
 		},
 		Next:                     upstream.Echo{},
+		CallbackPath:             conf.CallbackPath,
 		SessionStore:             store,
+		SkipAuthenticationRegex:  []string{"/static/.*"},
 		SkipRedirectToLoginRegex: []string{"/api/.*"},
 		Logger:                   log.New(os.Stdout, "", log.LstdFlags),
 	})
