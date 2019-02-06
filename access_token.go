@@ -52,6 +52,10 @@ func (m *Middleware) getAccessTokenFromSession(ctx context.Context, r *http.Requ
 		return "", errors.New("couldn't type case session or session is empty")
 	}
 
+	if state.AccessToken == "" {
+		return "", errors.New("access token in session is empty")
+	}
+
 	return state.AccessToken, nil
 }
 
