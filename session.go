@@ -31,10 +31,8 @@ func (m *Middleware) createNewSession(ctx context.Context, accessToken string, w
 	}
 
 	// State is not set, but doesn't hurt to try to get it
-	state, ok := session.Values[sessionName].(State)
-	if !ok {
-		// State is not stored, carry on
-	}
+	state, _ := session.Values[sessionName].(State)
+
 	stateNew := State{
 		AccessToken:      accessToken,
 		RefreshToken:     state.RefreshToken,

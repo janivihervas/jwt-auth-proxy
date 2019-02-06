@@ -2,14 +2,14 @@ package authproxy
 
 import (
 	"fmt"
-	"github.com/gorilla/sessions"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"net/url"
 	"regexp"
 
-	"github.com/gorilla/securecookie"
+	"github.com/gorilla/sessions"
+
 	"golang.org/x/oauth2"
 
 	"github.com/pkg/errors"
@@ -36,7 +36,6 @@ type Config struct {
 
 	mux                      *http.ServeMux
 	callbackPath             string
-	cookieStore              *securecookie.SecureCookie
 	skipAuthenticationRegex  []*regexp.Regexp
 	skipRedirectToLoginRegex []*regexp.Regexp
 }

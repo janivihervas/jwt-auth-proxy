@@ -6,20 +6,20 @@ import (
 )
 
 var (
-	ErrTokenExpired = errors.New("oidc: token is expired")
+	// ErrTokenExpired is returned if the token is expired
+	ErrTokenExpired = errors.New("jwt: token is expired")
 )
 
+// AccessToken contains the fields from the JWT
 type AccessToken struct {
 }
 
-func (at AccessToken) Valid() error {
+// Valid returns non-nil error if any of the fields are invalid or the token is expired
+func (token AccessToken) Valid() error {
 	return nil
 }
 
-type Token interface {
-	Valid() error
-}
-
+// ParseAccessToken and validate it
 func ParseAccessToken(ctx context.Context, accessTokenStr string) (AccessToken, error) {
 	// TODO
 	if accessTokenStr == "" {

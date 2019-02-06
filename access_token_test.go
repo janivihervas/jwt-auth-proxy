@@ -18,10 +18,14 @@ func TestMiddleware_getAccessTokenFromCookie(t *testing.T) {
 		ctx         = context.Background()
 	)
 
-	assert.Equal(t, "", m.getAccessTokenFromCookie(ctx, r))
+	s, err := m.getAccessTokenFromCookie(ctx, r)
+	assert.Error(t, err)
+	assert.Equal(t, "", s)
 
 	r.AddCookie(cookie)
-	assert.Equal(t, accessToken, m.getAccessTokenFromCookie(ctx, r))
+	s, err = m.getAccessTokenFromCookie(ctx, r)
+	assert.NoError(t, err)
+	assert.Equal(t, accessToken, s)
 }
 
 func TestMiddleware_getAccessTokenFromHeader(t *testing.T) {
@@ -32,14 +36,22 @@ func TestMiddleware_getAccessTokenFromHeader(t *testing.T) {
 		ctx         = context.Background()
 	)
 
-	assert.Equal(t, "", m.getAccessTokenFromHeader(ctx, r))
+	s, err := m.getAccessTokenFromHeader(ctx, r)
+	assert.Error(t, err)
+	assert.Equal(t, "", s)
 
 	r.Header.Set(authHeaderName, "")
-	assert.Equal(t, "", m.getAccessTokenFromHeader(ctx, r))
+	s, err = m.getAccessTokenFromHeader(ctx, r)
+	assert.Error(t, err)
+	assert.Equal(t, "", s)
 
 	r.Header.Set(authHeaderName, authHeaderPrefix)
-	assert.Equal(t, "", m.getAccessTokenFromHeader(ctx, r))
+	s, err = m.getAccessTokenFromHeader(ctx, r)
+	assert.Error(t, err)
+	assert.Equal(t, "", s)
 
 	r.Header.Set(authHeaderName, authHeaderPrefix+" "+accessToken)
-	assert.Equal(t, accessToken, m.getAccessTokenFromHeader(ctx, r))
+	s, err = m.getAccessTokenFromHeader(ctx, r)
+	assert.NoError(t, err)
+	assert.Equal(t, accessToken, s)
 }

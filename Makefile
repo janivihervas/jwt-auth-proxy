@@ -58,7 +58,7 @@ golint:
 nakedret:
 	nakedret ./...
 gocyclo:
-	gocyclo -over 13 $(GO_FILES_NO_TEST)
+	gocyclo -over 14 $(GO_FILES_NO_TEST)
 errcheck:
 	errcheck -ignoretests ./...
 unconvert:

@@ -20,7 +20,7 @@ import (
 	"golang.org/x/oauth2"
 )
 
-type Config struct {
+type config struct {
 	AzureClientID     string `envconfig:"AZURE_AD_CLIENT_ID"`
 	AzureClientSecret string `envconfig:"AZURE_AD_CLIENT_SECRET"`
 	AzureTenant       string `envconfig:"AZURE_AD_TENANT"`
@@ -31,16 +31,16 @@ type Config struct {
 }
 
 func main() {
-	var config Config
+	var conf config
 
 	_ = gotenv.OverLoad(".env")
-	err := envconfig.Process("", &config)
+	err := envconfig.Process("", &conf)
 	if err != nil {
 		panic(err)
 	}
 
-	//store := sessions.NewCookieStore([]byte(config.CookieHashKey), []byte(config.CookieEncryptKey))
-	store, err := redistore.NewRediStore(100, "tcp", ":6379", "", []byte(config.CookieHashKey), []byte(config.CookieEncryptKey))
+	//store := sessions.NewCookieStore([]byte(conf.CookieHashKey), []byte(conf.CookieEncryptKey))
+	store, err := redistore.NewRediStore(100, "tcp", ":6379", "", []byte(conf.CookieHashKey), []byte(conf.CookieEncryptKey))
 	if err != nil {
 		panic(err)
 	}
@@ -54,10 +54,10 @@ func main() {
 
 	m, err := authproxy.NewMiddleware(&authproxy.Config{
 		AuthClient: &oauth2.Config{
-			ClientID:     config.AzureClientID,
-			ClientSecret: config.AzureClientSecret,
-			Endpoint:     azure.Endpoint(config.AzureTenant),
-			RedirectURL:  config.CallbackURL,
+			ClientID:     conf.AzureClientID,
+			ClientSecret: conf.AzureClientSecret,
+			Endpoint:     azure.Endpoint(conf.AzureTenant),
+			RedirectURL:  conf.CallbackURL,
 			Scopes:       []string{authproxy.ScopeOpenID, authproxy.ScopeOfflineAccess},
 		},
 		Next:                     upstream.Echo{},
@@ -69,7 +69,7 @@ func main() {
 		panic(err)
 	}
 
-	err = server.RunHTTP(config.Port, handlers.LoggingHandler(os.Stdout, m))
+	err = server.RunHTTP(conf.Port, handlers.LoggingHandler(os.Stdout, m))
 	if err != nil {
 		panic(err)
 	}
