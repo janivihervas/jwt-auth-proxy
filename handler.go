@@ -72,7 +72,7 @@ func (m *Middleware) unauthorized(ctx context.Context, w http.ResponseWriter, r 
 
 	state, ok := session.Values[sessionName].(State)
 	if !ok {
-		m.Logger.Printf("couldn't type case session or session is empty")
+		m.Logger.Printf("couldn't type cast session or session is empty")
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
@@ -167,7 +167,7 @@ func (m *Middleware) authorizeCallback(w http.ResponseWriter, r *http.Request) {
 
 	state, ok := session.Values[sessionName].(State)
 	if !ok {
-		m.Logger.Println("couldn't type case session or session is empty")
+		m.Logger.Println("couldn't type cast session or session is empty")
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}

@@ -49,7 +49,7 @@ func (m *Middleware) getAccessTokenFromSession(ctx context.Context, r *http.Requ
 
 	state, ok := session.Values[sessionName].(State)
 	if !ok {
-		return "", errors.New("couldn't type case session or session is empty")
+		return "", errors.New("couldn't type cast session or session is empty")
 	}
 
 	if state.AccessToken == "" {
