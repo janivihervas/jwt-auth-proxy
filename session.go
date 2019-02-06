@@ -18,10 +18,16 @@ const (
 
 // State of the current user
 type State struct {
+	// AuthRequestState is stored for comparing the state returned by the authentication provider
 	AuthRequestState string
-	AccessToken      string
-	RefreshToken     string
-	OriginalURL      string
+	// AccessToken is stored so that authentication still works if the access token cookie is empty
+	AccessToken string
+	// RefreshToken for refreshing access token
+	RefreshToken string
+	// OriginalURL is the url that was requested but got redirected to login page.
+	// When handling the authorization callback, middleware will redirect back to this url,
+	// if found in session
+	OriginalURL string
 }
 
 func (m *Middleware) createNewSession(ctx context.Context, accessToken string, w http.ResponseWriter, r *http.Request) error {
