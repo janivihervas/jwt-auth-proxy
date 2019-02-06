@@ -9,7 +9,7 @@ import (
 
 // Middleware for authentication requests
 type Middleware struct {
-	Config
+	*Config
 }
 
 // ServeHTTP will authenticate the request and forward it to the next http.Handler
@@ -40,7 +40,7 @@ func NewMiddleware(config *Config) (*Middleware, error) {
 	config.mux = mux
 
 	m := &Middleware{
-		Config: *config,
+		Config: config,
 	}
 	mux.HandleFunc(m.callbackPath, m.authorizeCallback)
 	mux.HandleFunc("/", m.defaultHandler)
