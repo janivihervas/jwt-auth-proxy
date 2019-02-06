@@ -133,7 +133,7 @@ func (m *Middleware) refreshAccessToken(ctx context.Context, w http.ResponseWrit
 		return "", errors.New("no refresh token in session")
 	}
 
-	tokens, err := m.AuthClient.TokenSource(r.Context(), &oauth2.Token{
+	tokens, err := m.AuthClient.TokenSource(ctx, &oauth2.Token{
 		AccessToken:  state.AccessToken,
 		RefreshToken: state.RefreshToken,
 	}).Token()

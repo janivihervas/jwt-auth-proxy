@@ -62,8 +62,6 @@ func (m *Middleware) unauthorized(ctx context.Context, w http.ResponseWriter, r 
 		m.Logger.Printf("%+v", err)
 	}
 
-	ctx = r.Context()
-
 	session, err := m.SessionStore.Get(r, sessionName)
 	if err != nil {
 		m.Logger.Printf("couldn't get session: %+v", err)
