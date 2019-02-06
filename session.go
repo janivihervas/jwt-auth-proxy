@@ -30,9 +30,10 @@ func (m *Middleware) createNewSession(ctx context.Context, accessToken string, w
 		return errors.Wrapf(err, "could not get session %s", sessionName)
 	}
 
+	// State is not set, but doesn't hurt to try to get it
 	state, ok := session.Values[sessionName].(State)
 	if !ok {
-		return errors.Errorf("couldn't type cast session %s", sessionName)
+		// State is not stored, carry on
 	}
 	stateNew := State{
 		AccessToken:      accessToken,

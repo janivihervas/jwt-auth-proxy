@@ -49,7 +49,7 @@ func (m *Middleware) getAccessTokenFromSession(ctx context.Context, r *http.Requ
 
 	state, ok := session.Values[sessionName].(State)
 	if !ok {
-		return "", errors.Errorf("couldn't type case session %s", sessionName)
+		return "", errors.New("couldn't type case session or session is empty")
 	}
 
 	return state.AccessToken, nil
@@ -91,7 +91,6 @@ func (m *Middleware) setupAccessTokenAndSession(ctx context.Context, w http.Resp
 		r.Header.Set(authHeaderName, authHeaderPrefix+" "+accessToken)
 	}
 
-	// Always create the session so the next handlers don't need to do it
 	if !sessionSet {
 		return errors.Wrap(m.createNewSession(ctx, accessToken, w, r), "couldn't create new session")
 	}
@@ -123,7 +122,7 @@ func (m *Middleware) refreshAccessToken(ctx context.Context, w http.ResponseWrit
 
 	state, ok := session.Values[sessionName].(State)
 	if !ok {
-		return "", errors.Errorf("couldn't type cast session %s", err)
+		return "", errors.New("couldn't type cast session or session is empty")
 	}
 
 	if state.RefreshToken == "" {
