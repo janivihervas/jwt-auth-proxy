@@ -1,0 +1,4 @@
+config is not valid:
+
+SkipRedirectToLoginRegex[0] ("[") is invalid regex: error parsing regexp: missing closing ]: `[`
+

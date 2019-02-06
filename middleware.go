@@ -42,7 +42,7 @@ func NewMiddleware(config *Config) (*Middleware, error) {
 	m := &Middleware{
 		Config: config,
 	}
-	mux.HandleFunc(m.callbackPath, m.authorizeCallback)
+	mux.HandleFunc(m.CallbackPath, m.authorizeCallback)
 	mux.HandleFunc("/", m.defaultHandler)
 
 	return m, nil

@@ -5,7 +5,6 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"net/url"
 	"regexp"
 
 	"github.com/gorilla/sessions"
@@ -19,6 +18,8 @@ import (
 type Config struct {
 	// Next http.Handler
 	Next http.Handler
+	// CallbackPath to handle authorization callback
+	CallbackPath string
 	// AuthClient for handling authentication flow
 	AuthClient *oauth2.Config
 	// SessionStore for persisting session state
@@ -35,7 +36,6 @@ type Config struct {
 	Logger *log.Logger
 
 	mux                      *http.ServeMux
-	callbackPath             string
 	skipAuthenticationRegex  []*regexp.Regexp
 	skipRedirectToLoginRegex []*regexp.Regexp
 }
@@ -47,15 +47,14 @@ func (c *Config) Valid() error {
 	}
 	var errorMsg string
 
+	if c.CallbackPath == "" {
+		errorMsg = errorMsg + "CallbackPath is empty\n"
+	}
+	if c.CallbackPath == "/" {
+		errorMsg = errorMsg + "CallbackPath is can't be '/'\n"
+	}
 	if c.AuthClient == nil {
 		errorMsg = errorMsg + "AuthClient is nil\n"
-	} else {
-		u, err := url.Parse(c.AuthClient.RedirectURL)
-		if err != nil {
-			errorMsg = errorMsg + "Can't parse AuthClient.RedirectURL:" + err.Error() + "\n"
-		} else {
-			c.callbackPath = u.Path
-		}
 	}
 	if c.SessionStore == nil {
 		errorMsg = errorMsg + "SessionStore is nil\n"
@@ -83,7 +82,7 @@ func (c *Config) Valid() error {
 	}
 
 	if errorMsg != "" {
-		return errors.New("Config is not valid:\n\n" + errorMsg)
+		return errors.New("config is not valid:\n\n" + errorMsg)
 	}
 
 	return nil
