@@ -3,7 +3,6 @@ package authproxy
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 
 	"github.com/janivihervas/authproxy/internal/random"
@@ -30,7 +29,7 @@ func (m *Middleware) defaultHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		accessTokenStr, err = m.refreshAccessToken(ctx, w, r)
 		if err != nil {
-			m.Logger.Printf("Couldn't refresh access token: %+v", err)
+			m.Logger.Printf("couldn't refresh access token, access token was empty: %+v", err)
 		}
 	}
 
@@ -40,7 +39,7 @@ func (m *Middleware) defaultHandler(w http.ResponseWriter, r *http.Request) {
 		if validationErr == jwt.ErrTokenExpired {
 			accessTokenStr, err = m.refreshAccessToken(ctx, w, r)
 			if err != nil {
-				m.Logger.Printf("Couldn't refresh access token: %+v", err)
+				m.Logger.Printf("couldn't refresh access token, access token was expired: %+v", err)
 			}
 			continue
 		}
@@ -48,7 +47,7 @@ func (m *Middleware) defaultHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if validationErr != nil {
-		m.Logger.Printf("couldn't validate access token, unauthorized: %+v", validationErr)
+		m.Logger.Printf("couldn't validate access token, move to unauthorized flow: %+v", validationErr)
 		m.unauthorized(ctx, w, r)
 		return
 	}
@@ -59,7 +58,7 @@ func (m *Middleware) defaultHandler(w http.ResponseWriter, r *http.Request) {
 func (m *Middleware) unauthorized(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 	err := m.clearSessionAndAccessToken(ctx, w, r)
 	if err != nil {
-		m.Logger.Printf("%+v", err)
+		m.Logger.Printf("couldn't clear session and/or access token: %+v", err)
 	}
 
 	session, err := m.SessionStore.Get(r, sessionName)
@@ -72,8 +71,6 @@ func (m *Middleware) unauthorized(ctx context.Context, w http.ResponseWriter, r 
 	state, ok := session.Values[sessionName].(State)
 	if !ok {
 		m.Logger.Printf("couldn't type cast session or session is empty")
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-		return
 	}
 
 	authRequestState := random.String(32)
@@ -109,7 +106,7 @@ func (m *Middleware) unauthorized(ctx context.Context, w http.ResponseWriter, r 
 
 type unauthorizedResponse struct {
 	StatusCode  int    `json:"statusCode"`
-	RedirectURL string `json:"redirectURL"`
+	RedirectURL string `json:"redirectUrl"`
 }
 
 func (m *Middleware) unauthorizedResponse(ctx context.Context, w http.ResponseWriter, redirectURL string) {
@@ -162,14 +159,14 @@ func (m *Middleware) authorizeCallback(w http.ResponseWriter, r *http.Request) {
 	session, err := m.SessionStore.Get(r, sessionName)
 	if err != nil {
 		m.Logger.Printf("couldn't get session: %+v", err)
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		http.Error(w, "no session in request", http.StatusInternalServerError)
 		return
 	}
 
 	state, ok := session.Values[sessionName].(State)
 	if !ok {
 		m.Logger.Println("couldn't type cast session or session is empty")
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		http.Error(w, "no session in request", http.StatusInternalServerError)
 		return
 	}
 
@@ -185,21 +182,22 @@ func (m *Middleware) authorizeCallback(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if stateNew != stateOld {
-		http.Error(w, fmt.Sprintf("states are not the same: %s != %s", stateNew, stateOld), http.StatusBadRequest)
+		m.Logger.Printf("states are not the same: %s != %s", stateNew, stateOld)
+		http.Error(w, "states are not the same", http.StatusBadRequest)
 		return
 	}
 
 	tokens, err := m.AuthClient.Exchange(ctx, code, oauth2.AccessTypeOffline)
 	if err != nil {
 		m.Logger.Printf("couldn't exchange authorization code for tokens: %+v", err)
-		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		http.Error(w, "couldn't exchange authorization code for tokens", http.StatusBadRequest)
 		return
 	}
 
 	_, err = jwt.ParseAccessToken(ctx, tokens.AccessToken)
 	if err != nil {
 		m.Logger.Println("access token from exchange was invalid")
-		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		http.Error(w, "access token from exchange was invalid", http.StatusBadRequest)
 		return
 	}
 

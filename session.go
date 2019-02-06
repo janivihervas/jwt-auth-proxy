@@ -38,15 +38,9 @@ func (m *Middleware) createNewSession(ctx context.Context, accessToken string, w
 
 	// State is not set, but doesn't hurt to try to get it
 	state, _ := session.Values[sessionName].(State)
+	state.AccessToken = accessToken
 
-	stateNew := State{
-		AccessToken:      accessToken,
-		RefreshToken:     state.RefreshToken,
-		OriginalURL:      state.OriginalURL,
-		AuthRequestState: state.AuthRequestState,
-	}
-
-	session.Values[sessionName] = stateNew
+	session.Values[sessionName] = state
 	err = session.Save(r, w)
 	if err != nil {
 		return errors.Wrapf(err, "couldn't save session %s", sessionName)

@@ -145,6 +145,7 @@ func (m *Middleware) refreshAccessToken(ctx context.Context, w http.ResponseWrit
 		state.RefreshToken = tokens.RefreshToken
 	}
 	state.AccessToken = tokens.AccessToken
+	http.SetCookie(w, createAccessTokenCookie(state.AccessToken))
 
 	session.Values[sessionName] = state
 	err = session.Save(r, w)
