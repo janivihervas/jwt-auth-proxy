@@ -230,6 +230,6 @@ func (m *Middleware) authorizeCallback(w http.ResponseWriter, r *http.Request) {
 		url = "/"
 	}
 
-	m.Logger.Printf("redirecting to %s", url)
+	m.Logger.Printf("authorize callback successful, redirecting to %s", url)
 	http.Redirect(w, r, url, http.StatusSeeOther)
 }
