@@ -4,7 +4,12 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 	"time"
+
+	"github.com/janivihervas/authproxy/azure"
+
+	"golang.org/x/oauth2"
 
 	"github.com/gorilla/handlers"
 
@@ -12,23 +17,22 @@ import (
 
 	"github.com/gorilla/sessions"
 	"github.com/janivihervas/authproxy"
-	"github.com/janivihervas/authproxy/azure"
 	"github.com/janivihervas/authproxy/internal/server"
 	"github.com/janivihervas/authproxy/upstream"
 	"github.com/kelseyhightower/envconfig"
 	"github.com/subosito/gotenv"
-	"golang.org/x/oauth2"
 )
 
 type config struct {
-	AzureClientID     string `envconfig:"AZURE_AD_CLIENT_ID"`
-	AzureClientSecret string `envconfig:"AZURE_AD_CLIENT_SECRET"`
-	AzureTenant       string `envconfig:"AZURE_AD_TENANT"`
-	CookieHashKey     string `envconfig:"COOKIE_HASH_KEY"`
-	CookieEncryptKey  string `envconfig:"COOKIE_ENCRYPT_KEY"`
-	CallbackURL       string `envconfig:"CALLBACK_URL"`
-	CallbackPath      string `envconfig:"CALLBACK_PATH"`
-	Port              string `envconfig:"PORT"`
+	AzureClientID               string `envconfig:"AZURE_AD_CLIENT_ID"`
+	AzureClientSecret           string `envconfig:"AZURE_AD_CLIENT_SECRET"`
+	AzureTenant                 string `envconfig:"AZURE_AD_TENANT"`
+	CookieHashKey               string `envconfig:"COOKIE_HASH_KEY"`
+	CookieEncryptKey            string `envconfig:"COOKIE_ENCRYPT_KEY"`
+	CallbackURL                 string `envconfig:"CALLBACK_URL"`
+	CallbackPath                string `envconfig:"CALLBACK_PATH"`
+	Port                        string `envconfig:"PORT"`
+	AdditionalAuthURLParameters string `envconfig:"ADDITIONAL_AUTH_URL_PARAMETERS"`
 }
 
 func main() {
@@ -61,12 +65,13 @@ func main() {
 			RedirectURL:  conf.CallbackURL,
 			Scopes:       []string{authproxy.ScopeOpenID, authproxy.ScopeOfflineAccess},
 		},
-		Next:                     upstream.Echo{},
-		CallbackPath:             conf.CallbackPath,
-		SessionStore:             store,
-		SkipAuthenticationRegex:  []string{"/static/.*"},
-		SkipRedirectToLoginRegex: []string{"/api/.*"},
-		Logger:                   log.New(os.Stdout, "", log.LstdFlags),
+		AdditionalAuthURLParameters: parseAdditionalParameters(conf.AdditionalAuthURLParameters),
+		Next:                        upstream.Echo{},
+		CallbackPath:                conf.CallbackPath,
+		SessionStore:                store,
+		SkipAuthenticationRegex:     []string{"/static/.*"},
+		SkipRedirectToLoginRegex:    []string{"/api/.*"},
+		Logger:                      log.New(os.Stdout, "", log.LstdFlags),
 	})
 	if err != nil {
 		panic(err)
@@ -76,4 +81,17 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+}
+
+func parseAdditionalParameters(raw string) []oauth2.AuthCodeOption {
+	var additionalParameters []oauth2.AuthCodeOption
+	parameters := strings.Split(raw, "&")
+	for _, parameter := range parameters {
+		keyValue := strings.Split(parameter, "=")
+		if len(keyValue) == 2 && keyValue[0] != "" && keyValue[1] != "" {
+			additionalParameters = append(additionalParameters, oauth2.SetAuthURLParam(keyValue[0], keyValue[1]))
+		}
+	}
+
+	return additionalParameters
 }

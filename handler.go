@@ -84,7 +84,11 @@ func (m *Middleware) unauthorized(ctx context.Context, w http.ResponseWriter, r 
 		return
 	}
 
-	redirectURL := m.AuthClient.AuthCodeURL(state.AuthRequestState, oauth2.AccessTypeOffline)
+	opts := []oauth2.AuthCodeOption{
+		oauth2.AccessTypeOffline,
+	}
+	opts = append(opts, m.AdditionalAuthURLParameters...)
+	redirectURL := m.AuthClient.AuthCodeURL(state.AuthRequestState, opts...)
 	for _, regexp := range m.skipRedirectToLoginRegex {
 		if regexp.MatchString(r.URL.Path) {
 			m.Logger.Printf("path %s matched regexp %s, skipping redirection to login page", r.URL.Path, regexp.String())
@@ -187,7 +191,11 @@ func (m *Middleware) authorizeCallback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tokens, err := m.AuthClient.Exchange(ctx, code, oauth2.AccessTypeOffline)
+	opts := []oauth2.AuthCodeOption{
+		oauth2.AccessTypeOffline,
+	}
+	opts = append(opts, m.AdditionalAuthURLParameters...)
+	tokens, err := m.AuthClient.Exchange(ctx, code, opts...)
 	if err != nil {
 		m.Logger.Printf("couldn't exchange authorization code for tokens: %+v", err)
 		http.Error(w, "couldn't exchange authorization code for tokens", http.StatusBadRequest)
