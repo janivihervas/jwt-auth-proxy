@@ -9,6 +9,6 @@ require (
 	github.com/pkg/errors v0.8.1
 	github.com/stretchr/testify v1.3.0
 	github.com/subosito/gotenv v1.1.1
-	golang.org/x/net v0.0.0-20190206173232-65e2d4e15006 // indirect
-	golang.org/x/oauth2 v0.0.0-20190130055435-99b60b757ec1
+	golang.org/x/net v0.0.0-20190213061140-3a22650c66bd // indirect
+	golang.org/x/oauth2 v0.0.0-20190212230446-3e8b2be13635
 )

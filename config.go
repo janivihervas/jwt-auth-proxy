@@ -22,6 +22,9 @@ type Config struct {
 	CallbackPath string
 	// AuthClient for handling authentication flow
 	AuthClient *oauth2.Config
+	// AdditionalAuthURLParameters for providers who require additional authorization parameters,
+	// like Auth0 requires to set and "audience" parameter in order to receive a JWT access token
+	AdditionalAuthURLParameters []oauth2.AuthCodeOption
 	// SessionStore for persisting session state
 	SessionStore sessions.Store
 	// SkipAuthenticationRegex for skipping authentication on these paths
