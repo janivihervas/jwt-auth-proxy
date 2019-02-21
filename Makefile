@@ -43,7 +43,6 @@ install-update:
 	go mod tidy -v
 	go mod verify
 
-
 format:
 	gofmt -s -w -e -l .
 	goimports -w -e -l .
