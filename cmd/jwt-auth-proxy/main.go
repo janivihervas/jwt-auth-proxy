@@ -19,27 +19,28 @@ import (
 	"github.com/janivihervas/authproxy"
 	"github.com/janivihervas/authproxy/internal/server"
 	"github.com/janivihervas/authproxy/upstream"
-	"github.com/kelseyhightower/envconfig"
 	"github.com/subosito/gotenv"
+
+	"github.com/stevenroose/gonfig"
 )
 
 type config struct {
-	AzureClientID               string `envconfig:"AZURE_AD_CLIENT_ID"`
-	AzureClientSecret           string `envconfig:"AZURE_AD_CLIENT_SECRET"`
-	AzureTenant                 string `envconfig:"AZURE_AD_TENANT"`
-	CookieHashKey               string `envconfig:"COOKIE_HASH_KEY"`
-	CookieEncryptKey            string `envconfig:"COOKIE_ENCRYPT_KEY"`
-	CallbackURL                 string `envconfig:"CALLBACK_URL"`
-	CallbackPath                string `envconfig:"CALLBACK_PATH"`
-	Port                        string `envconfig:"PORT"`
-	AdditionalAuthURLParameters string `envconfig:"ADDITIONAL_AUTH_URL_PARAMETERS"`
+	ConfigFile                  string `id:"config" short:"c" desc:"Configuration file"`
+	ClientID                    string `id:"client-id" desc:"OIDC client id"`
+	ClientSecret                string `id:"client-secret" desc:"OIDC client secret"`
+	CookieHashKey               string `id:"cookie-hash-key" desc:"Key for hashing session cookie"`
+	CookieEncryptKey            string `id:"cookie-encrypt-key" desc:"Key for encrypting session cookie"`
+	CallbackURL                 string `id:"callback-url" desc:"Full callback url to authproxy. Example: https://www.example.com/auth-callback"`
+	callbackPath                string
+	Port                        string `id:"port" short:"p" default:"3000" desc:"Port to run the server on"`
+	AdditionalAuthURLParameters string `id:"additional-auth-url-parameters" desc:"Key-value pairs for providers who require additional authorization parameters. Example: audience=auth0appName,foo=bar"`
 }
 
 func main() {
 	var conf config
-
 	_ = gotenv.OverLoad(".env")
-	err := envconfig.Process("", &conf)
+
+	err := gonfig.Load(&conf, gonfig.Conf{})
 	if err != nil {
 		panic(err)
 	}
