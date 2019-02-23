@@ -13,7 +13,7 @@ func TestRunHTTP(t *testing.T) {
 	go func() {
 		err := RunHTTP("30000", upstream.Echo{})
 		if err != nil {
-			t.Fatal("Server didn't start", err)
+			panic(err)
 		}
 	}()
 
@@ -25,7 +25,7 @@ func TestRunHTTP(t *testing.T) {
 			continue
 		}
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
-		err = resp.Body.Close()
+		assert.NoError(t, resp.Body.Close())
 	}
 
 	if err != nil {

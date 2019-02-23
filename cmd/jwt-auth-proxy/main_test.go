@@ -45,7 +45,7 @@ func TestAuthProxy(t *testing.T) {
 	go func() {
 		err := server.RunHTTP("3000", upstream.Echo{})
 		if err != nil {
-			t.Fatal(err)
+			panic(err)
 		}
 	}()
 
@@ -54,7 +54,7 @@ func TestAuthProxy(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		resp, startErr := http.Get("http://localhost:3000/foo")
 		if startErr == nil {
-			startErr = resp.Body.Close()
+			assert.NoError(t, resp.Body.Close())
 			break
 		}
 	}
