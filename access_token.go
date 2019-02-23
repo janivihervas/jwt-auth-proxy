@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/janivihervas/authproxy/jwt"
+
 	"golang.org/x/oauth2"
 
 	"github.com/pkg/errors"
@@ -42,14 +44,9 @@ func (m *Middleware) getAccessTokenFromHeader(ctx context.Context, r *http.Reque
 }
 
 func (m *Middleware) getAccessTokenFromSession(ctx context.Context, r *http.Request) (string, error) {
-	session, err := m.SessionStore.Get(r, sessionName)
+	state, err := getStateFromContext(ctx)
 	if err != nil {
-		return "", errors.Wrapf(err, "couldn't get session %s", sessionName)
-	}
-
-	state, ok := session.Values[sessionName].(State)
-	if !ok {
-		return "", errors.New("couldn't type cast session or session is empty")
+		return "", errors.Wrap(err, "couldn't get session from context")
 	}
 
 	if state.AccessToken == "" {
@@ -59,7 +56,7 @@ func (m *Middleware) getAccessTokenFromSession(ctx context.Context, r *http.Requ
 	return state.AccessToken, nil
 }
 
-func (m *Middleware) setupAccessTokenAndSession(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+func (m *Middleware) setupAccessToken(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 	var (
 		cookieSet   bool
 		headerSet   bool
@@ -96,7 +93,11 @@ func (m *Middleware) setupAccessTokenAndSession(ctx context.Context, w http.Resp
 	}
 
 	if !sessionSet {
-		return errors.Wrap(m.createNewSession(ctx, accessToken, w, r), "couldn't create new session")
+		state, err := getStateFromContext(ctx)
+		if err != nil {
+			return err
+		}
+		state.AccessToken = accessToken
 	}
 
 	return nil
@@ -119,14 +120,9 @@ func (m *Middleware) getAccessToken(ctx context.Context, r *http.Request) (strin
 }
 
 func (m *Middleware) refreshAccessToken(ctx context.Context, w http.ResponseWriter, r *http.Request) (string, error) {
-	session, err := m.SessionStore.Get(r, sessionName)
+	state, err := getStateFromContext(ctx)
 	if err != nil {
-		return "", errors.Wrapf(err, "couldn't get session %s", sessionName)
-	}
-
-	state, ok := session.Values[sessionName].(State)
-	if !ok {
-		return "", errors.New("couldn't type cast session or session is empty")
+		return "", errors.Wrap(err, "couldn't get session from context")
 	}
 
 	if state.RefreshToken == "" {
@@ -141,16 +137,16 @@ func (m *Middleware) refreshAccessToken(ctx context.Context, w http.ResponseWrit
 		return "", errors.Wrap(err, "couldn't refresh tokens")
 	}
 
-	if tokens.RefreshToken != "" {
-		state.RefreshToken = tokens.RefreshToken
+	_, err = jwt.ParseAccessToken(ctx, tokens.AccessToken)
+	if err != nil {
+		return "", errors.Wrap(err, "couldn't refresh tokens, returned access token was invalid")
 	}
+
 	state.AccessToken = tokens.AccessToken
 	http.SetCookie(w, createAccessTokenCookie(state.AccessToken))
 
-	session.Values[sessionName] = state
-	err = session.Save(r, w)
-	if err != nil {
-		return state.AccessToken, errors.New("couldn't save session")
+	if tokens.RefreshToken != "" {
+		state.RefreshToken = tokens.RefreshToken
 	}
 
 	return state.AccessToken, nil

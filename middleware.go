@@ -1,6 +1,7 @@
 package authproxy
 
 import (
+	"context"
 	"net/http"
 )
 
@@ -13,13 +14,31 @@ type Middleware struct {
 func (m *Middleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	err := m.setupAccessTokenAndSession(ctx, w, r)
+	session, state, err := m.initializeSession(r)
 	if err != nil {
-		// Either access token is empty or couldn't create a session
-		m.Logger.Printf("couldn't setup access token or session: %+v", err)
+		m.Logger.Printf("couldn't initialise session: %+v", err)
+		http.Error(w, "couldn't initialise session", http.StatusInternalServerError)
+		return
 	}
 
-	m.mux.ServeHTTP(w, r)
+	ctx = context.WithValue(ctx, ctxStateKey, state)
+	r = r.WithContext(ctx)
+
+	err = m.setupAccessToken(ctx, w, r)
+	if err != nil {
+		// Access token is not set in request
+		m.Logger.Printf("couldn't setup access token: %+v", err)
+	}
+
+	writer := &sessionWriter{
+		sessionStore:   m.SessionStore,
+		session:        session,
+		state:          state,
+		logger:         m.Logger,
+		r:              r,
+		ResponseWriter: w,
+	}
+	m.mux.ServeHTTP(writer, r)
 }
 
 // NewMiddleware creates a new authentication middleware

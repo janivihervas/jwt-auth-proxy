@@ -7,13 +7,13 @@ import (
 	"strings"
 	"time"
 
+	"github.com/boj/redistore"
+
 	"github.com/janivihervas/authproxy/azure"
 
 	"golang.org/x/oauth2"
 
 	"github.com/gorilla/handlers"
-
-	"github.com/boj/redistore"
 
 	"github.com/gorilla/sessions"
 	"github.com/janivihervas/authproxy"
@@ -44,14 +44,13 @@ func main() {
 		panic(err)
 	}
 
-	//store := sessions.NewCookieStore([]byte(conf.CookieHashKey), []byte(conf.CookieEncryptKey))
 	store, err := redistore.NewRediStore(100, "tcp", ":6379", "", []byte(conf.CookieHashKey), []byte(conf.CookieEncryptKey))
 	if err != nil {
 		panic(err)
 	}
 	store.Options = &sessions.Options{
 		Path:     "/",
-		MaxAge:   int(time.Hour * 24 * 7),
+		MaxAge:   int(time.Hour * 24 * 7 / time.Second),
 		Secure:   false,
 		HttpOnly: true,
 		SameSite: http.SameSiteDefaultMode,
