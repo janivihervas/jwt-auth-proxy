@@ -4,8 +4,6 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/davecgh/go-spew/spew"
-
 	"github.com/gorilla/sessions"
 )
 
@@ -19,8 +17,6 @@ type sessionWriter struct {
 }
 
 func (s *sessionWriter) WriteHeader(statusCode int) {
-	s.logger.Println(s.r.URL.Path, spew.Sdump(s.state))
-
 	session, err := s.sessionStore.Get(s.r, sessionName)
 	if err != nil {
 		s.logger.Printf("sessionWriter: could not get session from request: %+v", err)

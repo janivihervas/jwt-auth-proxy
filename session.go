@@ -75,7 +75,6 @@ func (m *Middleware) clearSessionAndAccessToken(ctx context.Context, w http.Resp
 	state.AccessToken = ""
 	// Do not clear state.AuthRequestStates
 	state.RefreshToken = ""
-	// Do not clear state.OriginalURLs
 
 	return nil
 }
