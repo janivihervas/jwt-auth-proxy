@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"time"
 
 	"github.com/janivihervas/authproxy/internal/random"
 	"golang.org/x/oauth2"
@@ -29,7 +30,7 @@ func (m *Middleware) defaultHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		accessTokenStr, err = m.refreshAccessToken(ctx, w, r)
 		if err != nil {
-			m.Logger.Printf("couldn't refresh access token, access token was empty: %+v", err)
+			m.Logger.Printf("couldn't refresh access token: %+v", err)
 		}
 	}
 
@@ -39,7 +40,7 @@ func (m *Middleware) defaultHandler(w http.ResponseWriter, r *http.Request) {
 		if validationErr == jwt.ErrTokenExpired {
 			accessTokenStr, err = m.refreshAccessToken(ctx, w, r)
 			if err != nil {
-				m.Logger.Printf("couldn't refresh access token, access token was expired: %+v", err)
+				m.Logger.Printf("couldn't refresh access token, previous access token was expired: %+v", err)
 			}
 			continue
 		}
@@ -61,47 +62,30 @@ func (m *Middleware) unauthorized(ctx context.Context, w http.ResponseWriter, r 
 		m.Logger.Printf("couldn't clear session and/or access token: %+v", err)
 	}
 
-	session, err := m.SessionStore.Get(r, sessionName)
+	state, err := getStateFromContext(ctx)
 	if err != nil {
-		m.Logger.Printf("couldn't get session: %+v", err)
+		m.Logger.Printf("couldn't get session from context: %+v", err)
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
 
-	state, ok := session.Values[sessionName].(State)
-	if !ok {
-		m.Logger.Printf("couldn't type cast session or session is empty")
-	}
-
-	authRequestState := random.String(32)
-	state.AuthRequestState = authRequestState
-
-	session.Values[sessionName] = state
-	err = m.SessionStore.Save(r, w, session)
-	if err != nil {
-		m.Logger.Printf("couldn't save session: %+v", err)
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-		return
+	requestState := random.String(32)
+	state.AuthRequestStates[requestState] = authRequestState{
+		ExpiresAt:   time.Now().Add(authRequestStateExpiration),
+		OriginalURL: r.URL.String(),
 	}
 
 	opts := []oauth2.AuthCodeOption{
 		oauth2.AccessTypeOffline,
 	}
 	opts = append(opts, m.AdditionalAuthURLParameters...)
-	redirectURL := m.AuthClient.AuthCodeURL(state.AuthRequestState, opts...)
+	redirectURL := m.AuthClient.AuthCodeURL(requestState, opts...)
 	for _, regexp := range m.skipRedirectToLoginRegex {
 		if regexp.MatchString(r.URL.Path) {
 			m.Logger.Printf("path %s matched regexp %s, skipping redirection to login page", r.URL.Path, regexp.String())
 			m.unauthorizedResponse(ctx, w, redirectURL)
 			return
 		}
-	}
-
-	state.OriginalURL = r.URL.String()
-	session.Values[sessionName] = state
-	err = m.SessionStore.Save(r, w, session)
-	if err != nil {
-		m.Logger.Printf("couldn't save session: %+v", err)
 	}
 
 	m.Logger.Println("redirecting to login page")
@@ -137,7 +121,7 @@ func (m *Middleware) unauthorizedResponse(ctx context.Context, w http.ResponseWr
 
 func (m *Middleware) authorizeCallback(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		m.Logger.Printf("received non-GET request to authorize callback: %s", r.Method)
+		m.Logger.Printf("authorize callback: received non-GET request: %s", r.Method)
 		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
 		return
 	}
@@ -146,48 +130,42 @@ func (m *Middleware) authorizeCallback(w http.ResponseWriter, r *http.Request) {
 		ctx      = r.Context()
 		code     = r.URL.Query().Get("code")
 		stateNew = r.URL.Query().Get("state")
+		now      = time.Now()
 	)
 
 	if code == "" {
-		m.Logger.Println("no code in authorize callback")
+		m.Logger.Println("authorize callback: no code")
 		http.Error(w, "no code in request query", http.StatusBadRequest)
 		return
 	}
 
 	if stateNew == "" {
-		m.Logger.Println("no state in authorize callback")
+		m.Logger.Println("authorize callback: no state")
 		http.Error(w, "no state in request query", http.StatusBadRequest)
 		return
 	}
 
-	session, err := m.SessionStore.Get(r, sessionName)
+	state, err := getStateFromContext(ctx)
 	if err != nil {
-		m.Logger.Printf("couldn't get session: %+v", err)
+		m.Logger.Printf("authorize callback: %+v", err)
 		http.Error(w, "no session in request", http.StatusInternalServerError)
 		return
 	}
 
-	state, ok := session.Values[sessionName].(State)
-	if !ok {
-		m.Logger.Println("couldn't type cast session or session is empty")
-		http.Error(w, "no session in request", http.StatusInternalServerError)
+	authRequestState, found := state.AuthRequestStates[stateNew]
+	if !found {
+		m.Logger.Println("authorize callback: unknown authorization state", stateNew)
+		http.Error(w, "unknown authorization state", http.StatusBadRequest)
 		return
 	}
-
-	stateOld := state.AuthRequestState
 
 	// Clean previous state from session
-	state.AuthRequestState = ""
+	delete(state.AuthRequestStates, stateNew)
+	state.clearExpiredStates()
 
-	session.Values[sessionName] = state
-	err = m.SessionStore.Save(r, w, session)
-	if err != nil {
-		m.Logger.Printf("couldn't save session: %+v", err)
-	}
-
-	if stateNew != stateOld {
-		m.Logger.Printf("states are not the same: %s != %s", stateNew, stateOld)
-		http.Error(w, "states are not the same", http.StatusBadRequest)
+	if now.After(authRequestState.ExpiresAt) {
+		m.Logger.Printf("authorize callback: authorization state was expired at %v", authRequestState.ExpiresAt)
+		http.Error(w, "authorization state was expired", http.StatusBadRequest)
 		return
 	}
 
@@ -216,22 +194,7 @@ func (m *Middleware) authorizeCallback(w http.ResponseWriter, r *http.Request) {
 		state.RefreshToken = tokens.RefreshToken
 	}
 
-	session.Values[sessionName] = state
-	err = m.SessionStore.Save(r, w, session)
-	if err != nil {
-		m.Logger.Printf("couldn't save session: %+v", err)
-	}
-
-	url := state.OriginalURL
-
-	// Clear previous redirect url from session
-	state.OriginalURL = ""
-
-	session.Values[sessionName] = state
-	err = m.SessionStore.Save(r, w, session)
-	if err != nil {
-		m.Logger.Printf("couldn't save session: %+v", err)
-	}
+	url := authRequestState.OriginalURL
 
 	if url == "" {
 		url = "/"
