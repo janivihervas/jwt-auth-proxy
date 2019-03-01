@@ -29,17 +29,23 @@ clean:
 .PHONY: install install-new install-update
 install:
 	go mod download
-	go get -u $(GO_TOOLS)
+#	Replace once https://github.com/golang/lint/issues/436 is fixed
+	go get $(GO_TOOLS)
+#	go get -u $(GO_TOOLS)
 	go mod tidy -v
 	go mod verify
 install-new:
 	go get ./...
-	go get -u $(GO_TOOLS)
+#	Replace once https://github.com/golang/lint/issues/436 is fixed
+	go get $(GO_TOOLS)
+#	go get -u $(GO_TOOLS)
 	go mod tidy -v
 	go mod verify
 install-update:
 	go get -u ./...
-	go get -u $(GO_TOOLS)
+#	Replace once https://github.com/golang/lint/issues/436 is fixed
+	go get $(GO_TOOLS)
+#	go get -u $(GO_TOOLS)
 	go mod tidy -v
 	go mod verify
 
