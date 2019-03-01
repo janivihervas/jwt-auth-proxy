@@ -1,6 +1,14 @@
 // Package oidc provides functions for interacting with OpenID Connect providers
 package oidc
 
+import (
+	"context"
+	"encoding/json"
+	"net/http"
+
+	"github.com/pkg/errors"
+)
+
 // Configuration for connecting to OIDC provider
 // Documentation and fields copied from
 // https://openid.net/specs/openid-connect-discovery-1_0.html#ProviderMetadata
@@ -168,4 +176,87 @@ type Configuration struct {
 	// registration process SHOULD display this URL to the person registering
 	// the Client if it is given.
 	OpTOSURI string `json:"op_tos_uri"`
+}
+
+// Valid checks that all the fields marked as required are present.
+func (config Configuration) Valid() error {
+	if config.Issuer == "" {
+		return errors.New("authproxy/oidc: issuer is empty")
+	}
+	if config.AuthorizationEndpoint == "" {
+		return errors.New("authproxy/oidc: authorization_endpoint is empty")
+	}
+	if config.JWKSURI == "" {
+		return errors.New("authproxy/oidc: jwks_uri is empty")
+	}
+	if len(config.ResponseTypesSupported) == 0 {
+		return errors.New("authproxy/oidc: response_types_supported is empty")
+	}
+	if len(config.SubjectTypesSupported) == 0 {
+		return errors.New("authproxy/oidc: subject_types_supported is empty")
+	}
+	if len(config.IDTokenSigningAlgValuesSupported) == 0 {
+		return errors.New("authproxy/oidc: id_token_signing_alg_values_supported is empty")
+	}
+
+	return nil
+}
+
+// FillDefaultValuesIfEmpty with the following replacements:
+//  - ResponseModesSupported: ["query", "fragment"]
+//  - GrantTypesSupported: ["authorization_code", "implicit"]
+//  - TokenEndpointAuthMethodsSupported: ["client_secret_basic"]
+//  - RequestURIParameterSupported: true
+func (config *Configuration) FillDefaultValuesIfEmpty() {
+	if len(config.ResponseModesSupported) == 0 {
+		config.ResponseModesSupported = []string{"query", "fragment"}
+	}
+	if len(config.GrantTypesSupported) == 0 {
+		config.GrantTypesSupported = []string{"authorization_code", "implicit"}
+	}
+	if len(config.TokenEndpointAuthMethodsSupported) == 0 {
+		config.TokenEndpointAuthMethodsSupported = []string{"client_secret_basic"}
+	}
+	if config.RequestURIParameterSupported == nil {
+		b := true
+		config.RequestURIParameterSupported = &b
+	}
+}
+
+// GetOpenIDConnectConfiguration from a well-known url. Should be Issuer + /.well-known/openid-configuration
+func GetOpenIDConnectConfiguration(ctx context.Context, client *http.Client, url string) (config Configuration, err error) {
+	if client == nil {
+		client = http.DefaultClient
+	}
+
+	req, err := http.NewRequest(http.MethodGet, url, nil)
+	if err != nil {
+		return config, errors.Wrap(err, "authproxy/oidc: couldn't create HTTP request")
+	}
+
+	req = req.WithContext(ctx)
+	resp, err := client.Do(req)
+	if err != nil {
+		return config, errors.Wrap(err, "authproxy/oidc: HTTP request failed")
+	}
+
+	defer func() {
+		errClose := resp.Body.Close()
+		if errClose != nil {
+			err = errors.Wrap(errClose, "authproxy/oidc: couldn't close HTTP response body")
+		}
+	}()
+
+	if resp.StatusCode != http.StatusOK {
+		return config, errors.Errorf("authproxy:oidc received non-200 status code: %d", resp.StatusCode)
+	}
+
+	err = json.NewDecoder(resp.Body).Decode(&config)
+	if err != nil {
+		return config, errors.Wrap(err, "authproxy/oidc: couldn't decode HTTP response body to JSON")
+	}
+
+	config.FillDefaultValuesIfEmpty()
+
+	return config, nil
 }
