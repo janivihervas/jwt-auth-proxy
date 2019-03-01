@@ -24,9 +24,7 @@ jobs:
           name: Install
           command: |
             if [[ $CIRCLE_BRANCH != "master" ]]; then
-#             Replace once https://github.com/golang/lint/issues/436 is fixed
               make install-new
-#              make install-update
               if [[ $(git status --porcelain) ]]; then
                 git add --all
                 git commit -m "AUTOMATIC BOT: Install"
