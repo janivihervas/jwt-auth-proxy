@@ -1,0 +1,66 @@
+fooFoo:
+  s: "boo"
+
+
+oidc:
+  clientId: "clientId"
+  clientSecret: "clientSecret"
+  configurationUrl: "wellknownUrl"
+  callbackUrl: "http://localhost:3000/auth-callback"
+#  additionalScopes:
+#    - "email"
+#  TODO: Audiences?
+  additionalAuthenticationUrlParameters:
+    - key: "audience"
+      value: "github.com/janivihervas/authproxy"
+
+authproxy:
+  host: "localhost"
+  port: 3000
+  livenessProbePort: 3001
+  readinessProbePort: 3002
+  callbackPath: "/auth-callback"
+  authenticationMode: "blacklist" # whitelist, blacklist
+  authenticationBlacklist:
+    - "/static/.*"
+#  authenticationWhitelist:
+#    - ".*"
+  redirectToLoginMode: "blacklist" # whitelist, blacklist, html-only
+  redirectToLoginBlacklist:
+    - "/api/.*"
+#  redirectToLoginWhitelist:
+#    - "/"
+#    - "/profile"
+#    - "/message/.*"
+  accessToken:
+    enableCookie: true
+    name: "access_token"
+    path: "/"
+    domain: "http://localhost:3000"
+    httpOnly: true
+    secure: false
+    sameSite: "" # strict, lax, empty
+
+sessionStore:
+  backend: "redis"
+  redis:
+    maxIdleConnections: 100
+    network: "tcp"
+    address: "localhost:6379"
+    password: ""
+  cookie:
+    keyPairs:
+      - "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+      - "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+    name: "authproxy_session"
+    path: "/"
+    domain: "http://localhost:3000"
+    httpOnly: true
+    secure: false
+    sameSite: "" # strict, lax, empty
+    maxAge: 604800 # one week in seconds
+
+
+SESSION_STORE_COOKIE_KEYPAIRS
+SESSION_STORE_COOKIE_NAME
+SESSION_STORE_COOKIE_PATH
