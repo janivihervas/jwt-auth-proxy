@@ -79,7 +79,7 @@ jobs:
               git add --all
               git commit -m "AUTOBOT: Update snapshots"
             fi
-#      - run: make release
+      #      - run: make release
       - run:
           name: Push autobot changes
           command: |
