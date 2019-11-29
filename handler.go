@@ -28,7 +28,7 @@ func (m *Middleware) defaultHandler(w http.ResponseWriter, r *http.Request) {
 
 	accessTokenStr, err := m.getAccessToken(ctx, r)
 	if err != nil {
-		accessTokenStr, err = m.refreshAccessToken(ctx, w, r)
+		accessTokenStr, err = m.refreshAccessToken(ctx, w)
 		if err != nil {
 			m.Logger.Printf("couldn't refresh access token: %+v", err)
 		}
@@ -38,7 +38,7 @@ func (m *Middleware) defaultHandler(w http.ResponseWriter, r *http.Request) {
 	for i := 0; i < 3; i++ {
 		_, validationErr = jwt.ParseAccessToken(ctx, accessTokenStr)
 		if validationErr == jwt.ErrTokenExpired {
-			accessTokenStr, err = m.refreshAccessToken(ctx, w, r)
+			accessTokenStr, err = m.refreshAccessToken(ctx, w)
 			if err != nil {
 				m.Logger.Printf("couldn't refresh access token, previous access token was expired: %+v", err)
 			}
@@ -83,7 +83,7 @@ func (m *Middleware) unauthorized(ctx context.Context, w http.ResponseWriter, r 
 	for _, regexp := range m.skipRedirectToLoginRegex {
 		if regexp.MatchString(r.URL.Path) {
 			m.Logger.Printf("path %s matched regexp %s, skipping redirection to login page", r.URL.Path, regexp.String())
-			m.unauthorizedResponse(ctx, w, redirectURL)
+			m.unauthorizedResponse(w, redirectURL)
 			return
 		}
 	}
@@ -97,7 +97,7 @@ type unauthorizedResponse struct {
 	RedirectURL string `json:"redirectUrl"`
 }
 
-func (m *Middleware) unauthorizedResponse(ctx context.Context, w http.ResponseWriter, redirectURL string) {
+func (m *Middleware) unauthorizedResponse(w http.ResponseWriter, redirectURL string) {
 	resp := unauthorizedResponse{
 		StatusCode:  http.StatusUnauthorized,
 		RedirectURL: redirectURL,
@@ -110,18 +110,19 @@ func (m *Middleware) unauthorizedResponse(ctx context.Context, w http.ResponseWr
 
 	err := encoder.Encode(resp)
 	if err != nil {
-		m.Logger.Printf("writing json for unauthorized response failed, falling back to plain text: %+v", err)
+		m.Logger.Printf("writing json for unauthorised response failed, falling back to plain text: %+v", err)
 		w.Header().Set("Content-Type", "text/plain")
 		_, err = w.Write([]byte(redirectURL))
 		if err != nil {
-			m.Logger.Printf("writing plain text for unauthorized response failed: %+v", err)
+			m.Logger.Printf("writing plain text for unauthorised response failed: %+v", err)
 		}
 	}
 }
 
+// nolint:funlen
 func (m *Middleware) authorizeCallback(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		m.Logger.Printf("authorize callback: received non-GET request: %s", r.Method)
+		m.Logger.Printf("authorise callback: received non-GET request: %s", r.Method)
 		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
 		return
 	}
@@ -152,6 +153,7 @@ func (m *Middleware) authorizeCallback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// nolint:govet
 	authRequestState, found := state.AuthRequestStates[stateNew]
 	if !found {
 		m.Logger.Println("authorize callback: unknown authorization state", stateNew)

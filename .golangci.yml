@@ -31,8 +31,8 @@ linters-settings:
     min-complexity: 15
   misspell:
     locale: UK
-#    ignore-words:
-#      - someword
+    ignore-words:
+      - unauthorized
 
 linters:
   enable:
