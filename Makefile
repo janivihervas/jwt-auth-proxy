@@ -70,7 +70,8 @@ dep-new:
 	go mod tidy -v
 	go mod verify
 dep-update:
-	go get -u ./...
+	go get ./...
+	@go list -m -u -json all | jq -r '. | select(.Indirect != true) | select(.Update != null) | .Path' | while read pkg; do echo "go get -u $$pkg"; go get -u $$pkg; done
 	go get -u golang.org/x/tools/cmd/goimports
 	go mod tidy -v
 	go mod verify
@@ -163,7 +164,7 @@ $(CACHE)/$(VERSION)/github-upload-url:
 	@curl --request GET \
     	--url '$(GITHUB_API_URL)/releases/tags/$(TAG)' \
     	--user $(GITHUB_API_USERNAME):$(GITHUB_API_TOKEN) \
-    	| jq '.upload_url'| sed 's/"//g' | sed 's|\(.*/assets\){.*}|\1|' > $@
+    	| jq -r '.upload_url' | sed 's|\(.*/assets\){.*}|\1|' > $@
 
 .PHONY: parallelism
 parallelism:
