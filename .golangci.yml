@@ -7,7 +7,7 @@ run:
     - .git
     - .idea
     - bin
-    - node_modules
+    - dist
     - tmp
 
 linters-settings:

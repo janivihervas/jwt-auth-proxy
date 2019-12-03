@@ -110,11 +110,11 @@ func (m *Middleware) unauthorizedResponse(w http.ResponseWriter, redirectURL str
 
 	err := encoder.Encode(resp)
 	if err != nil {
-		m.Logger.Printf("writing json for unauthorised response failed, falling back to plain text: %+v", err)
+		m.Logger.Printf("writing json for unauthorized response failed, falling back to plain text: %+v", err)
 		w.Header().Set("Content-Type", "text/plain")
 		_, err = w.Write([]byte(redirectURL))
 		if err != nil {
-			m.Logger.Printf("writing plain text for unauthorised response failed: %+v", err)
+			m.Logger.Printf("writing plain text for unauthorized response failed: %+v", err)
 		}
 	}
 }
@@ -122,7 +122,7 @@ func (m *Middleware) unauthorizedResponse(w http.ResponseWriter, redirectURL str
 // nolint:funlen
 func (m *Middleware) authorizeCallback(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		m.Logger.Printf("authorise callback: received non-GET request: %s", r.Method)
+		m.Logger.Printf("authorize callback: received non-GET request: %s", r.Method)
 		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
 		return
 	}
