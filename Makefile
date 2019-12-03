@@ -49,7 +49,7 @@ OS_ARCHS_WIN = $(filter windows_%, $(OS_ARCHS))
 APPS = $(shell ls cmd)
 CACHE := .cache
 mkdir = @mkdir -p $(dir $@)
-GO_BUILD_FLAGS = -trimpath -installsuffix 'static' -ldflags "-X main.version=$(VERSION) main.gitCommit=$(COMMIT) -s -w"
+GO_BUILD_FLAGS = -trimpath -installsuffix 'static' -ldflags "-X main.version=$(VERSION) -X main.gitCommit=$(COMMIT) -s -w"
 GO_FILES_NO_TEST = $(shell find . -name "*.go" -not -name "*_test.go")
 MD_FILES = $(shell find . -name "*.md")
 GRAPHVIZ_FILES = $(shell find . -name "*.gv")
