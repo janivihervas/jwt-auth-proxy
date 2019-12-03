@@ -1,6 +1,8 @@
 package main
 
 import (
+	"flag"
+	"log"
 	"os"
 
 	"github.com/janivihervas/authproxy/internal/server"
@@ -14,7 +16,16 @@ func main() {
 		port = e
 	}
 
-	err := server.RunHTTP(port, upstream.Echo{})
+	var portFlag string
+	flag.StringVar(&portFlag, "port", "3000", "port to run the server")
+	flag.Parse()
+
+	if portFlag != "" {
+		port = portFlag
+	}
+
+	logger := log.New(os.Stdout, "", log.Ldate | log.Ltime | log.LUTC)
+	err := server.RunHTTP(port, upstream.Echo{}, logger)
 	if err != nil {
 		panic(err)
 	}
