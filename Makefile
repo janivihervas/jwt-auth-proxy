@@ -31,6 +31,8 @@ endif
 MAKEFLAGS += --no-print-directory --output-sync --jobs=$(PARALLELISM)
 
 PACKAGE := github.com/janivihervas/authproxy
+RELEASE_BIN := authproxy
+DOCKER_IMAGE = janivihervas/$(RELEASE_BIN):$(VERSION)
 
 GITHUB_API_URL := https://api.github.com/repos/janivihervas/authproxy
 
@@ -44,11 +46,11 @@ OS_ARCHS_MAC = $(filter darwin_%, $(OS_ARCHS))
 OS_ARCHS_WIN = $(filter windows_%, $(OS_ARCHS))
 
 APPS = $(shell ls cmd)
-RELEASE_BIN = authproxy
-CACHE = .cache
+CACHE := .cache
 mkdir = @mkdir -p $(dir $@)
-GO_FILES_NO_TEST := $(shell find . -name "*.go" -not -name "*_test.go")
-MD_FILES := $(shell find . -name "*.md")
+GO_FILES_NO_TEST = $(shell find . -name "*.go" -not -name "*_test.go")
+MD_FILES = $(shell find . -name "*.md")
+GRAPHVIZ_FILES = $(shell find . -name "*.gv")
 
 .PHONY: all
 all: dep format build lint test
@@ -88,13 +90,21 @@ format/go:
 	gofmt -s -w -e -l .
 	goimports -w -e -l .
 format/yaml:
-	@which prettier > /dev/null && prettier --write "**/*.yaml" "**/*.yml" || npx prettier --write "**/*.yaml" "**/*.yml"
+	prettier --write "**/*.yaml" "**/*.yml"
 format/md:
 	$(MAKE) \
 	$(MD_FILES)
 $(MD_FILES):
-	@which markdown-toc > /dev/null && markdown-toc -i $@ || npx markdown-toc -i $@
-	@which prettier > /dev/null && prettier --write $@ || npx prettier --write $@
+	markdown-toc -i $@
+	prettier --write $@
+
+.PHONY: diagram
+diagram:
+	$(MAKE) \
+	$(subst .gv,.png, $(GRAPHVIZ_FILES))
+
+%.png: %.gv
+	dot -Tpng -o $@ $<
 
 .PHONY: lint
 lint:
@@ -140,33 +150,49 @@ dist/$(VERSION)/$(RELEASE_BIN)_windows_%.tar.gz: bin/$(VERSION)/windows_%/$(RELE
 	$(mkdir)
 	tar -zcvf $@ --directory="bin/$(VERSION)/windows_$*" $(RELEASE_BIN).exe
 
+.PHONY: docker docker-login docker-push
+docker: bin/$(VERSION)/linux_amd64/$(RELEASE_BIN)
+	docker build -t $(DOCKER_IMAGE) .
+docker-login:
+	@if [ -z $(DOCKER_HUB_USERNAME) ]; then echo "DOCKER_HUB_USERNAME environment variable not set"; exit 1; fi
+	@if [ -z $(DOCKER_HUB_ACCESS_TOKEN) ]; then echo "DOCKER_HUB_ACCESS_TOKEN environment variable not set"; exit 1; fi
+	@docker login --username $(DOCKER_HUB_USERNAME) --password $(DOCKER_HUB_ACCESS_TOKEN)
+docker-push:
+	docker push $(DOCKER_IMAGE)
+
 .PHONY: release
 release:
 	$(MAKE) \
 	$(sort $(foreach a, $(OS_ARCHS_LINUX), github/$(VERSION)/$(RELEASE_BIN)_$a.tar.gz)) \
 	$(sort $(foreach a, $(OS_ARCHS_MAC), github/$(VERSION)/$(RELEASE_BIN)_$a.tar.gz)) \
-	$(sort $(foreach a, $(OS_ARCHS_WIN), github/$(VERSION)/$(RELEASE_BIN)_$a.tar.gz))
+	$(sort $(foreach a, $(OS_ARCHS_WIN), github/$(VERSION)/$(RELEASE_BIN)_$a.tar.gz)) \
+	docker
+	$(MAKE) docker-login
+	$(MAKE) docker-push
 
 .PHONY: github/$(VERSION)/%
 github/$(VERSION)/%: dist/$(VERSION)/% $(CACHE)/$(VERSION)/github-upload-url
 	@if [ -z $(GITHUB_API_USERNAME) ]; then echo "GITHUB_API_USERNAME environment variable not set"; exit 1; fi
 	@if [ -z $(GITHUB_API_TOKEN) ]; then echo "GITHUB_API_TOKEN environment variable not set"; exit 1; fi
-	@curl --request POST \
-	--user $$GITHUB_API_USERNAME:$$GITHUB_API_TOKEN \
-	--url "$(shell cat $(word 2,$^))?name=$(notdir $<)" \
-	--header 'content-type: application/gzip' \
-	--data '@$<'
+#	@curl --request POST \
+#	--user $(GITHUB_API_USERNAME):$(GITHUB_API_TOKEN) \
+#	--url "$(shell cat $(word 2,$^))?name=$(notdir $<)" \
+#	--header 'content-type: application/gzip' \
+#	--data '@$<'
 
 $(CACHE)/$(VERSION)/github-upload-url:
 	@if [ -z $(GITHUB_API_USERNAME) ]; then echo "GITHUB_API_USERNAME environment variable not set"; exit 1; fi
 	@if [ -z $(GITHUB_API_TOKEN) ]; then echo "GITHUB_API_TOKEN environment variable not set"; exit 1; fi
 	$(mkdir)
-	@curl --request GET \
-    	--url '$(GITHUB_API_URL)/releases/tags/$(TAG)' \
-    	--user $(GITHUB_API_USERNAME):$(GITHUB_API_TOKEN) \
-    	| jq -r '.upload_url' | sed 's|\(.*/assets\){.*}|\1|' > $@
+#	@curl --request GET \
+#    	--url '$(GITHUB_API_URL)/releases/tags/$(VERSION)' \
+#    	--user $(GITHUB_API_USERNAME):$(GITHUB_API_TOKEN) \
+#    	| jq -r '.upload_url' | sed 's|\(.*/assets\){.*}|\1|' > $@
 
 .PHONY: parallelism
 parallelism:
 	@echo $(PARALLELISM)
 
+.PHONY: version
+version:
+	@echo $(VERSION)

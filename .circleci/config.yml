@@ -1,39 +1,61 @@
-# Environment variables
-# PUSHBACK_TOKEN: Personal access token from Github, needs repo access: https://github.com/settings/tokens
-# PUSHBACK_USER_EMAIL: Email of the user profile used as autobot
-# PUSHBACK_USER_NAME: Github user name used as autobot
 version: 2
+
 machine:
   timezone: Europe/Helsinki
+
 jobs:
   build:
     docker:
-      - image: circleci/golang:1.12.0-node
+      - image: circleci/golang:1.13.4-node
     steps:
+      - add_ssh_keys:
+          fingerprints:
+            - "c7:9d:ad:53:66:b0:30:f6:72:92:f0:9a:0d:95:96:73"
       - checkout
       - run:
           name: Setup git
           command: |
-            git remote add pushback https://$PUSHBACK_TOKEN@github.com/janivihervas/authproxy.git
-            git config --global user.name $PUSHBACK_USER_NAME
-            git config --global user.email $PUSHBACK_USER_EMAIL
+            git config --global user.name circleci-bot
+            git config --global user.email circleci-bot@circleci.com
+      - run:
+          name: Install tools
+          command: |
+            sudo apt-get update
+            sudo apt-get install -y -qq graphviz
+            sudo npm install -g prettier markdown-toc
+      - run:
+          name: Set build cache keys
+          command: |
+            # Hack in order to use custom cache keys. CircleCI doesn't allow
+            # other environment variables to be used except their pre-defined ones
+            mkdir -p .cache
+            echo "$(git rev-parse 'HEAD^')" >> .cache/previous_build_cache
+            echo "$(git rev-parse 'HEAD')" >> .cache/current_build_cache
+      # Dependencies
       - restore_cache:
           keys:
-            - v1-deps-{{ arch }}-{{ checksum "go.mod" }}
+            - v1-deps-{{ arch }}-{{ checksum "go.mod" }}-{{ checksum "go.sum" }}
+      # Cache for Go compilation and tests
+      - restore_cache:
+          keys:
+            # Use cache from current SHA1 if it exists. Works if re-running the build
+            - v1-go-{{ arch }}-{{ checksum ".cache/current_build_cache" }}
+            # Get cache from previous git commit
+            - v1-go-{{ arch }}-{{ checksum ".cache/previous_build_cache" }}
       - run:
-          name: Install
+          name: Install dependencies
           command: |
             if [[ $CIRCLE_BRANCH != "master" ]]; then
-              make install-new
+              make dep-update
               if [[ $(git status --porcelain) ]]; then
                 git add --all
-                git commit -m "AUTOMATIC BOT: Install"
+                git commit -m "AUTOMATIC BOT: Install/update dependencies"
               fi
             else
-              make install
+              make dep
             fi
       - save_cache:
-          key: v1-deps-{{ arch }}-{{ checksum "go.mod" }}
+          key: v1-deps-{{ arch }}-{{ checksum "go.mod" }}-{{ checksum "go.sum" }}
           paths:
             - /go/pkg/mod
       - run:
@@ -47,29 +69,18 @@ jobs:
               fi
             fi
       - run:
-          name: Format Markdown
-          command: |
-            if [[ $CIRCLE_BRANCH != "master" ]]; then
-              sudo npm install -g prettier@1.14.0 markdown-toc@1.2.0
-              find . -type f -name "*.md" | parallel -k 'markdown-toc -i "{}"'
-              prettier --write "**/*.md"
-              if [[ $(git status --porcelain) ]]; then
-                git add --all
-                git commit -m "AUTOBOT: Format Markdown"
-              fi
-            fi
-      - run:
           name: Update diagrams
           command: |
             if [[ $CIRCLE_BRANCH != "master" ]]; then
-              sudo apt-get update
-              sudo apt-get install -y -qq graphviz
-              find . -name "*.gv" | sed 's/\.gv//' | xargs -I {} dot -Tpng -o {}.png {}.gv
+              make diagram
               if [[ $(git status --porcelain) ]]; then
                 git add --all
                 git commit -m "AUTOBOT: Update diagrams"
               fi
             fi
+      - run: make build
+      - setup_remote_docker
+      - run: make docker
       - run: make lint
       - run:
           name: make test-codecov
@@ -79,14 +90,60 @@ jobs:
               git add --all
               git commit -m "AUTOBOT: Update snapshots"
             fi
-      #      - run: make release
+      # Save build and test cache for next commit
+      - save_cache:
+          key: v1-go-{{ arch }}-{{ checksum ".cache/current_build_cache" }}
+          paths:
+            - /home/circleci/.cache/go-build
       - run:
           name: Push autobot changes
           command: |
             if [[ $CIRCLE_BRANCH != "master" ]]; then
               if [[ $(git log origin/$CIRCLE_BRANCH..$CIRCLE_BRANCH) ]]; then
-                echo "Pushing autobot fixes"
+                echo "Pushing autobot changes"
                 git push --set-upstream pushback $CIRCLE_BRANCH
                 exit 1
               fi
             fi
+      - run:
+          name: Copy binaries to workspace
+          command: |
+            mkdir -p /tmp/workspace
+            cp -R bin Makefile Dockerfile /tmp/workspace
+            make version > /tmp/workspace/VERSION
+      - persist_to_workspace:
+          root: /tmp/workspace
+          paths:
+            - bin
+            - Makefile
+            - Dockerfile
+            - VERSION
+
+  release:
+    docker:
+      - image: circleci/golang:1.13.4
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - run:
+          name: Copy workspace
+          command: |
+            cp -R /tmp/workspace .
+            export VERSION=$(cat VERSION)
+      - setup_remote_docker
+      - run: make release
+
+workflows:
+  version: 2
+  authproxy:
+    jobs:
+      - build
+      - release:
+          requires:
+            - build
+#          filters:
+#            branches:
+#              only:
+#                - master
+#            tags:
+#              only: /^v.*/
