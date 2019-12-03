@@ -1,100 +1,123 @@
 SHELL := /bin/bash
-MAKEFLAGS += --no-print-directory --output-sync
 
-BINARY := oidc-go
-CMD := github.com/janivihervas/$(BINARY)/cmd/$(BINARY)
-VERSION ?= $(shell git rev-parse HEAD)
+VERSION ?= dev
+COMMIT = $(shell git rev-parse HEAD)
+BRANCH = $(shell git rev-parse --abbrev-ref HEAD)
+TAG ?= $(shell git describe --tags 2>/dev/null)
 
-GO_FILES_NO_TEST := `find . -name "*.go" -not -name "*_test.go"`
-GO_TOOLS := golang.org/x/lint/golint \
-			golang.org/x/tools/cmd/goimports \
-			\
-			github.com/alexkohler/nakedret \
-			github.com/fzipp/gocyclo \
-			github.com/kisielk/errcheck \
-			github.com/mdempsky/unconvert \
-			\
-			gitlab.com/opennota/check/cmd/structcheck \
-			gitlab.com/opennota/check/cmd/varcheck \
-			\
-			honnef.co/go/tools/cmd/staticcheck \
+# If VERSION is not it's default value dev, change it for corresponding git id.
+# Will not have effect if VERSION is overwritten with VERSION=<version> make [target...]
+ifeq ($(VERSION), dev)
+  ifneq ($(TAG),)
+  	VERSION = $(TAG)
+  else ifeq ($(BRANCH), master)
+    VERSION = latest
+  endif
+endif
+
+# Maximum parallel jobs. Defaults to the number of physical cores on the machine.
+# Override with
+#   PARALLELISM=1 make [target...]
+PARALLELISM ?= 0
+ifeq ($(PARALLELISM), 0)
+  ifeq ($(shell uname), Darwin)
+    PARALLELISM = $(shell sysctl hw.physicalcpu | tr " " "\n" | tail -n 1)
+  else ifeq ($(shell uname), Linux)
+    PARALLELISM = $(shell cat /proc/cpuinfo | grep "model name" | wc -l)
+  else
+    PARALLELISM = 1
+  endif
+endif
+
+MAKEFLAGS += --no-print-directory --output-sync --jobs=$(PARALLELISM)
+
+PACKAGE := github.com/janivihervas/authproxy
+RELEASE_BIN := authproxy
+DOCKER_IMAGE = janivihervas/$(RELEASE_BIN):$(VERSION)
+
+GITHUB_API_URL := https://api.github.com/repos/janivihervas/authproxy
+
+# These are all the combinations of OS and architecture we're compiling to. See
+# https://golang.org/doc/install/source#environment for full list
+OS_ARCHS = linux_386 linux_amd64 linux_arm linux_arm64 \
+           darwin_386 darwin_amd64 \
+           windows_386 windows_amd64
+OS_ARCHS_LINUX = $(filter linux_%, $(OS_ARCHS))
+OS_ARCHS_MAC = $(filter darwin_%, $(OS_ARCHS))
+OS_ARCHS_WIN = $(filter windows_%, $(OS_ARCHS))
+
+APPS = $(shell ls cmd)
+CACHE := .cache
+mkdir = @mkdir -p $(dir $@)
+GO_BUILD_FLAGS = -trimpath -installsuffix 'static' -ldflags "-X main.version=$(VERSION) -X main.gitCommit=$(COMMIT) -s -w"
+GO_FILES_NO_TEST = $(shell find . -name "*.go" -not -name "*_test.go")
+MD_FILES = $(shell find . -name "*.md")
+GRAPHVIZ_FILES = $(shell find . -name "*.gv")
 
 .PHONY: all
-all: format build lint test
+all:
+	$(MAKE) dep
+	$(MAKE) format
+	$(MAKE) \
+		build \
+		docker \
+		lint \
+		test
 
 .PHONY: clean
 clean:
-	@rm -rf bin
+	@rm -rf bin dist $(CACHE)
+	@find . -type d -name ".snapshots" -exec rm -rf '{}' '+'
 
-.PHONY: install install-new install-update
-install:
+.PHONY: dep dep-new dep-update
+dep:
 	go mod download
-#	Replace once https://github.com/golang/lint/issues/436 is fixed
-	go get $(GO_TOOLS)
-#	go get -u $(GO_TOOLS)
+	go get -u golang.org/x/tools/cmd/goimports
 	go mod tidy -v
 	go mod verify
-install-new:
+dep-new:
 	go get ./...
-#	Replace once https://github.com/golang/lint/issues/436 is fixed
-	go get $(GO_TOOLS)
-#	go get -u $(GO_TOOLS)
+	go get -u golang.org/x/tools/cmd/goimports
 	go mod tidy -v
 	go mod verify
-install-update:
-	go get -u ./...
-#	Replace once https://github.com/golang/lint/issues/436 is fixed
-	go get $(GO_TOOLS)
-#	go get -u $(GO_TOOLS)
+dep-update:
+	go get ./...
+	@go list -m -u -json all | jq -r '. | select(.Indirect != true) | select(.Update != null) | .Path' | while read pkg; do echo "go get -u $$pkg"; go get -u $$pkg; done
+	go get -u golang.org/x/tools/cmd/goimports
 	go mod tidy -v
 	go mod verify
 
+.PHONY: format
 format:
+	$(MAKE) \
+	format/go \
+	format/yaml \
+	format/md
+
+.PHONY: format/go format/yaml format/md $(MD_FILES)
+format/go:
 	gofmt -s -w -e -l .
 	goimports -w -e -l .
+format/yaml:
+	prettier --write "**/*.yaml" "**/*.yml"
+format/md:
+	$(MAKE) \
+	$(MD_FILES)
+$(MD_FILES):
+	markdown-toc -i $@
+	prettier --write $@
 
-.PHONY: vet golint
-vet:
-	go vet ./...
-golint:
-	golint -set_exit_status ./...
+.PHONY: diagram
+diagram:
+	$(MAKE) \
+	$(subst .gv,.png, $(GRAPHVIZ_FILES))
 
-.PHONY: nakedret gocyclo errcheck unconvert
-nakedret:
-	nakedret ./...
-gocyclo:
-	gocyclo -over 14 $(GO_FILES_NO_TEST)
-errcheck:
-	errcheck -ignoretests ./...
-unconvert:
-	unconvert ./...
-
-.PHONY: structcheck varcheck
-structcheck:
-	structcheck ./...
-varcheck:
-	varcheck ./...
-
-.PHONY: staticcheck
-staticcheck:
-	staticcheck ./...
+%.png: %.gv
+	dot -Tpng -o $@ $<
 
 .PHONY: lint
 lint:
-	@$(MAKE) -j \
-	vet \
-	golint \
-	\
-	nakedret \
-	gocyclo \
-	errcheck \
-	unconvert \
-	\
-	structcheck \
-	varcheck \
-	\
-	staticcheck
-
+	golangci-lint run
 
 .PHONY: test
 test:
@@ -105,37 +128,85 @@ test-codecov:
 	go test -race -coverprofile=coverage.out -covermode=atomic ./...
 	bash <(curl -s https://codecov.io/bash)
 
-parts = $(subst -, ,$*)
-os = $(word 1, $(parts))
-arch = $(word 2, $(parts))
-
-.PRECIOUS: bin/$(BINARY).$(VERSION).%/$(BINARY)
-bin/$(BINARY).$(VERSION).%/$(BINARY): $(GO_FILES_NO_TEST)
-	@mkdir -p bin
-	CGO_ENABLED=0 GOOS=$(os) GOARCH=$(arch) go build -installsuffix cgo -o $@ $(CMD)
-
-bin/$(BINARY).$(VERSION).%.tar.gz: bin/$(BINARY).$(VERSION).%/$(BINARY)
-	tar -zcvf $@ --directory="bin" $(subst .tar.gz,,$(notdir $@))
-
-.PRECIOUS: bin/$(BINARY).$(VERSION).windows-%/$(BINARY).exe
-bin/$(BINARY).$(VERSION).windows-%/$(BINARY).exe: $(GO_FILES_NO_TEST)
-	@mkdir -p bin
-	CGO_ENABLED=0 GOOS=windows GOARCH=$* go build -installsuffix cgo -o $@ $(CMD)
-
-bin/$(BINARY).$(VERSION).windows-%.tar.gz: bin/$(BINARY).$(VERSION).windows-%/$(BINARY).exe
-	tar -zcvf $@ --directory="bin" $(subst .tar.gz,,$(notdir $@))
-
+# Compile binaries
 .PHONY: build
 build:
-	go install $(CMD)
-	@$(MAKE) -j \
-	bin/$(BINARY).$(VERSION).linux-amd64/$(BINARY) \
-	bin/$(BINARY).$(VERSION).darwin-amd64/$(BINARY) \
-	bin/$(BINARY).$(VERSION).windows-amd64/$(BINARY).exe
+	$(MAKE) \
+	$(sort $(foreach a, $(OS_ARCHS_LINUX), $(addprefix bin/$(VERSION)/$a/, $(APPS)))) \
+	$(sort $(foreach a, $(OS_ARCHS_MAC), $(addprefix bin/$(VERSION)/$a/, $(APPS)))) \
+	$(sort $(foreach a, $(OS_ARCHS_WIN), $(addsuffix .exe, $(addprefix bin/$(VERSION)/$a/, $(APPS)))))
+
+# Magic for parsing OS, architecture and package name for bin/$(VERSION)/% target
+bin_parts = $(subst /, , $@)
+bin_os_arch = $(subst _, , $(word 3, $(bin_parts)))
+bin_os = $(word 1, $(bin_os_arch))
+bin_arch = $(word 2, $(bin_os_arch))
+bin_pkg = $(basename $(word 4, $(bin_parts)))
+
+# Compile a binary with the specified OS and architecture. Example:
+#   make bin/$(VERSION)/linux_amd64/<app>
+.PRECIOUS: bin/$(VERSION)/%
+bin/$(VERSION)/%: $(GO_FILES_NO_TEST) go.mod go.sum
+	CGO_ENABLED=0 GOOS=$(bin_os) GOARCH=$(bin_arch) go build $(GO_BUILD_FLAGS) -o $@ $(PACKAGE)/cmd/$(bin_pkg)
+
+.PRECIOUS: dist/$(VERSION)/$(RELEASE_BIN)_%.tar.gz
+dist/$(VERSION)/$(RELEASE_BIN)_%.tar.gz: bin/$(VERSION)/%/$(RELEASE_BIN)
+	$(mkdir)
+	tar -zcvf $@ --directory="bin/$(VERSION)/$*" $(RELEASE_BIN)
+
+.PRECIOUS: dist/$(VERSION)/$(RELEASE_BIN)_windows_%.tar.gz
+dist/$(VERSION)/$(RELEASE_BIN)_windows_%.tar.gz: bin/$(VERSION)/windows_%/$(RELEASE_BIN).exe
+	$(mkdir)
+	tar -zcvf $@ --directory="bin/$(VERSION)/windows_$*" $(RELEASE_BIN).exe
+
+.PHONY: docker docker-login docker-push
+docker: bin/$(VERSION)/linux_amd64/$(RELEASE_BIN)
+	docker build --build-arg VERSION=$(VERSION) -t $(DOCKER_IMAGE) .
+docker-login:
+	@if [ -z $(DOCKER_HUB_USERNAME) ]; then echo "DOCKER_HUB_USERNAME environment variable not set"; exit 1; fi
+	@if [ -z $(DOCKER_HUB_ACCESS_TOKEN) ]; then echo "DOCKER_HUB_ACCESS_TOKEN environment variable not set"; exit 1; fi
+	@docker login --username $(DOCKER_HUB_USERNAME) --password $(DOCKER_HUB_ACCESS_TOKEN)
+docker-push:
+	docker push $(DOCKER_IMAGE)
 
 .PHONY: release
 release:
-	@$(MAKE) -j \
-	bin/$(BINARY).$(VERSION).linux-amd64.tar.gz \
-	bin/$(BINARY).$(VERSION).darwin-amd64.tar.gz \
-	bin/$(BINARY).$(VERSION).windows-amd64.tar.gz
+	$(MAKE) \
+	$(sort $(foreach a, $(OS_ARCHS_LINUX), github/$(VERSION)/$(RELEASE_BIN)_$a.tar.gz)) \
+	$(sort $(foreach a, $(OS_ARCHS_MAC), github/$(VERSION)/$(RELEASE_BIN)_$a.tar.gz)) \
+	$(sort $(foreach a, $(OS_ARCHS_WIN), github/$(VERSION)/$(RELEASE_BIN)_$a.tar.gz)) \
+	docker
+	$(MAKE) docker-login
+	$(MAKE) docker-push
+
+.PHONY: github/$(VERSION)/%
+github/$(VERSION)/%: dist/$(VERSION)/% $(CACHE)/$(VERSION)/github-upload-url
+	@if [ -z $(GITHUB_API_USERNAME) ]; then echo "GITHUB_API_USERNAME environment variable not set"; exit 1; fi
+	@if [ -z $(GITHUB_API_TOKEN) ]; then echo "GITHUB_API_TOKEN environment variable not set"; exit 1; fi
+	@curl \
+		--request POST \
+		--user $(GITHUB_API_USERNAME):$(GITHUB_API_TOKEN) \
+		--url "$(shell cat $(word 2,$^))?name=$(notdir $<)" \
+		--header 'content-type: application/gzip' \
+		--data '@$<'
+
+$(CACHE)/$(VERSION)/github-upload-url:
+	@if [ -z $(GITHUB_API_USERNAME) ]; then echo "GITHUB_API_USERNAME environment variable not set"; exit 1; fi
+	@if [ -z $(GITHUB_API_TOKEN) ]; then echo "GITHUB_API_TOKEN environment variable not set"; exit 1; fi
+	$(mkdir)
+	@curl \
+		--request GET \
+    	--url '$(GITHUB_API_URL)/releases/tags/$(VERSION)' \
+    	--user $(GITHUB_API_USERNAME):$(GITHUB_API_TOKEN) \
+    	| jq -r '.upload_url' | sed 's|\(.*/assets\){.*}|\1|' > $@
+
+.PHONY: parallelism
+parallelism:
+	@echo $(PARALLELISM)
+
+.PHONY: version
+version:
+	@echo $(VERSION)
+
+commit:
+	@echo $(COMMIT)

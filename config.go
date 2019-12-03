@@ -51,21 +51,21 @@ func (c *Config) Valid() error {
 	var errorMsg string
 
 	if c.CallbackPath == "" {
-		errorMsg = errorMsg + "CallbackPath is empty\n"
+		errorMsg += "CallbackPath is empty\n"
 	}
 	if c.CallbackPath == "/" {
-		errorMsg = errorMsg + "CallbackPath can't be '/'\n"
+		errorMsg += "CallbackPath can't be '/'\n"
 	}
 	if c.AuthClient == nil {
-		errorMsg = errorMsg + "AuthClient is nil\n"
+		errorMsg += "AuthClient is nil\n"
 	}
 	if c.SessionStore == nil {
-		errorMsg = errorMsg + "SessionStore is nil\n"
+		errorMsg += "SessionStore is nil\n"
 	}
 	for i, s := range c.SkipAuthenticationRegex {
 		r, err := regexp.Compile(s)
 		if err != nil {
-			errorMsg = errorMsg + fmt.Sprintf("SkipAuthenticationRegex[%d] (\"%s\") is invalid regex: %+v\n", i, s, err)
+			errorMsg += fmt.Sprintf("SkipAuthenticationRegex[%d] (\"%s\") is invalid regex: %+v\n", i, s, err)
 		} else {
 			c.skipAuthenticationRegex = append(c.skipAuthenticationRegex, r)
 		}
@@ -74,7 +74,7 @@ func (c *Config) Valid() error {
 	for i, s := range c.SkipRedirectToLoginRegex {
 		r, err := regexp.Compile(s)
 		if err != nil {
-			errorMsg = errorMsg + fmt.Sprintf("SkipRedirectToLoginRegex[%d] (\"%s\") is invalid regex: %+v\n", i, s, err)
+			errorMsg += fmt.Sprintf("SkipRedirectToLoginRegex[%d] (\"%s\") is invalid regex: %+v\n", i, s, err)
 		} else {
 			c.skipRedirectToLoginRegex = append(c.skipRedirectToLoginRegex, r)
 		}

@@ -1,15 +1,14 @@
 fooFoo:
   s: "boo"
 
-
 oidc:
   clientId: "clientId"
   clientSecret: "clientSecret"
   configurationUrl: "wellknownUrl"
   callbackUrl: "http://localhost:3000/auth-callback"
-#  additionalScopes:
-#    - "email"
-#  TODO: Audiences?
+  #  additionalScopes:
+  #    - "email"
+  #  TODO: Audiences?
   additionalAuthenticationUrlParameters:
     - key: "audience"
       value: "github.com/janivihervas/authproxy"
@@ -23,15 +22,15 @@ authproxy:
   authenticationMode: "blacklist" # whitelist, blacklist
   authenticationBlacklist:
     - "/static/.*"
-#  authenticationWhitelist:
-#    - ".*"
+  #  authenticationWhitelist:
+  #    - ".*"
   redirectToLoginMode: "blacklist" # whitelist, blacklist, html-only
   redirectToLoginBlacklist:
     - "/api/.*"
-#  redirectToLoginWhitelist:
-#    - "/"
-#    - "/profile"
-#    - "/message/.*"
+  #  redirectToLoginWhitelist:
+  #    - "/"
+  #    - "/profile"
+  #    - "/message/.*"
   accessToken:
     enableCookie: true
     name: "access_token"
@@ -59,8 +58,3 @@ sessionStore:
     secure: false
     sameSite: "" # strict, lax, empty
     maxAge: 604800 # one week in seconds
-
-
-SESSION_STORE_COOKIE_KEYPAIRS
-SESSION_STORE_COOKIE_NAME
-SESSION_STORE_COOKIE_PATH

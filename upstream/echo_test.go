@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
-	"strings"
 	"testing"
 
 	"github.com/bradleyjkemp/cupaloy/v2"
@@ -30,8 +29,7 @@ func TestEcho_ServeHTTP(t *testing.T) {
 		b, err := ioutil.ReadAll(w.Result().Body)
 		assert.NoError(t, err)
 
-		err = cupaloy.SnapshotMulti(strings.Replace(t.Name(), "/", "-", -1), string(b))
-		assert.NoError(t, err)
+		cupaloy.SnapshotT(t, string(b))
 	}
 
 	echo := Echo{}

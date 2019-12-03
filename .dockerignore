@@ -1,0 +1,8 @@
+**
+# This doesn't work :(
+# !bin/*/linux_amd64/authproxy
+!bin/
+bin/*/darwin_*
+bin/*/linux_arm*
+bin/*/linux_386
+bin/*/windows_*

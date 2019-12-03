@@ -25,7 +25,7 @@ type accessToken struct {
 	Name         string `id:"name" desc:"Cookie name" default:"access_token"`
 	Path         string `id:"path" desc:"Cookie path" default:"/"`
 	Domain       string `id:"domain" desc:"Cookie domain" default:""`
-	HttpOnly     bool   `id:"http-only" desc:"True if cookie should not be accessible from Javascript" default:"true"`
+	HTTPOnly     bool   `id:"http-only" desc:"True if cookie should not be accessible from Javascript" default:"true"`
 	Secure       bool   `id:"secure" desc:"True if cookie is sent only over HTTPS" default:"true"`
 	SameSite     string `id:"same-site" desc:"Cookie setting for SameSite. Accepted values are strict, lax or empty string" default:""`
 }
@@ -61,7 +61,7 @@ type cookie struct {
 	Name     string `id:"name" desc:"Cookie name" default:"authproxy_session"`
 	Path     string `id:"path" desc:"Cookie path" default:"/"`
 	Domain   string `id:"domain" desc:"Cookie domain" default:""`
-	HttpOnly bool   `id:"http-only" desc:"True if cookie should not be accessible from Javascript" default:"true"`
+	HTTPOnly bool   `id:"http-only" desc:"True if cookie should not be accessible from Javascript" default:"true"`
 	Secure   bool   `id:"secure" desc:"True if cookie is sent only over HTTPS" default:"true"`
 	SameSite string `id:"same-site" desc:"Cookie setting for SameSite. Accepted values are strict, lax or empty string" default:""`
 	MaxAge   int    `id:"max-age" desc:"Max age in seconds. Defaults to one week" default:"604800"`
