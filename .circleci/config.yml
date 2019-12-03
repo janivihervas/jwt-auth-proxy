@@ -23,6 +23,7 @@ jobs:
             sudo apt-get update
             sudo apt-get install -y -qq graphviz
             sudo npm install -g prettier markdown-toc
+      - run: make parallelism
       - run:
           name: Set build cache keys
           command: |
