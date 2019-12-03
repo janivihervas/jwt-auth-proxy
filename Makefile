@@ -55,14 +55,7 @@ MD_FILES = $(shell find . -name "*.md")
 GRAPHVIZ_FILES = $(shell find . -name "*.gv")
 
 .PHONY: all
-all:
-	$(MAKE) dep
-	$(MAKE) format
-	$(MAKE) \
-		build \
-		docker \
-		lint \
-		test
+all: dep-new format build docker lint test
 
 .PHONY: clean
 clean:
