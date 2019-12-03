@@ -35,10 +35,6 @@ type config struct {
 	AdditionalAuthURLParameters string `envconfig:"ADDITIONAL_AUTH_URL_PARAMETERS"`
 }
 
-
-
-
-
 func main() {
 	var conf config
 
