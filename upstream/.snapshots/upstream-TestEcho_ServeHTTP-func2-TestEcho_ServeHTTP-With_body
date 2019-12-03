@@ -1,5 +1,0 @@
-Method: POST
-Path: /body
-
-Body:
-something that is in the body

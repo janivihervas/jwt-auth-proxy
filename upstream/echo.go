@@ -3,6 +3,7 @@ package upstream
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 )
@@ -31,51 +32,51 @@ func (e Echo) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (Echo) basicRequestDetails(buf *bytes.Buffer, r *http.Request) {
-	buf.WriteString("Method: " + r.Method + "\n")
+func (Echo) basicRequestDetails(sw io.StringWriter, r *http.Request) {
+	_, _ = sw.WriteString("Method: " + r.Method + "\n")
 	if scheme := r.URL.Scheme; scheme != "" {
-		buf.WriteString("Scheme: " + r.URL.Scheme + "\n")
+		_, _ = sw.WriteString("Scheme: " + r.URL.Scheme + "\n")
 	}
 
 	if host := r.URL.Host; host != "" {
-		buf.WriteString("Host: " + r.URL.Host + "\n")
+		_, _ = sw.WriteString("Host: " + r.URL.Host + "\n")
 	}
 
-	buf.WriteString("Path: " + r.URL.Path + "\n")
+	_, _ = sw.WriteString("Path: " + r.URL.Path + "\n")
 }
 
-func (Echo) queries(buf *bytes.Buffer, r *http.Request) {
+func (Echo) queries(sw io.StringWriter, r *http.Request) {
 	if queries := r.URL.Query(); len(queries) > 0 {
-		buf.WriteString("\n" + "Query values:" + "\n")
+		_, _ = sw.WriteString("\n" + "Query values:" + "\n")
 		for key := range queries {
-			buf.WriteString(fmt.Sprintf("  %s: %s"+"\n", key, queries.Get(key)))
+			_, _ = sw.WriteString(fmt.Sprintf("  %s: %s"+"\n", key, queries.Get(key)))
 		}
 	}
 }
 
-func (Echo) headers(buf *bytes.Buffer, r *http.Request) {
+func (Echo) headers(sw io.StringWriter, r *http.Request) {
 	if headers := r.Header; len(headers) > 0 {
-		buf.WriteString("\n" + "Headers:" + "\n")
+		_, _ = sw.WriteString("\n" + "Headers:" + "\n")
 		for key := range headers {
-			buf.WriteString(fmt.Sprintf("  %s: %s"+"\n", key, headers.Get(key)))
+			_, _ = sw.WriteString(fmt.Sprintf("  %s: %s"+"\n", key, headers.Get(key)))
 		}
 	}
 }
 
-func (Echo) cookies(buf *bytes.Buffer, r *http.Request) {
+func (Echo) cookies(sw io.StringWriter, r *http.Request) {
 	if cookies := r.Cookies(); len(cookies) > 0 {
-		buf.WriteString("\n" + "Cookies:" + "\n")
+		_, _ = sw.WriteString("\n" + "Cookies:" + "\n")
 		for _, cookie := range cookies {
 			if cookie == nil {
 				continue
 			}
 
-			buf.WriteString(fmt.Sprintf("  - %s: %s"+"\n", cookie.Name, cookie.Value))
-			buf.WriteString(fmt.Sprintf("    Domain: %s"+"\n", cookie.Domain))
-			buf.WriteString(fmt.Sprintf("    Path: %s"+"\n", cookie.Path))
-			buf.WriteString(fmt.Sprintf("    Expires: %s"+"\n", cookie.Expires))
-			buf.WriteString(fmt.Sprintf("    HTTP only: %v"+"\n", cookie.HttpOnly))
-			buf.WriteString(fmt.Sprintf("    Secure: %v"+"\n", cookie.Secure))
+			_, _ = sw.WriteString(fmt.Sprintf("  - %s: %s"+"\n", cookie.Name, cookie.Value))
+			_, _ = sw.WriteString(fmt.Sprintf("    Domain: %s"+"\n", cookie.Domain))
+			_, _ = sw.WriteString(fmt.Sprintf("    Path: %s"+"\n", cookie.Path))
+			_, _ = sw.WriteString(fmt.Sprintf("    Expires: %s"+"\n", cookie.Expires))
+			_, _ = sw.WriteString(fmt.Sprintf("    HTTP only: %v"+"\n", cookie.HttpOnly))
+			_, _ = sw.WriteString(fmt.Sprintf("    Secure: %v"+"\n", cookie.Secure))
 		}
 	}
 }

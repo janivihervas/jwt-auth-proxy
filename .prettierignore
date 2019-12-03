@@ -1,0 +1,6 @@
+.cache
+.git
+.idea
+bin
+dist
+tmp

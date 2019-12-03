@@ -1,5 +1,7 @@
 .idea
+.cache
 bin
+dist
 .DS_Store
 .env
 tmp
