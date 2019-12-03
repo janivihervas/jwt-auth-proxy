@@ -7,6 +7,8 @@ jobs:
   build:
     docker:
       - image: circleci/golang:1.13.4-node
+        environment:
+          PARALLELISM: 2
     steps:
       - add_ssh_keys:
           fingerprints:
@@ -124,6 +126,8 @@ jobs:
   release:
     docker:
       - image: circleci/golang:1.13.4
+        environment:
+          PARALLELISM: 2
     steps:
       - attach_workspace:
           at: /tmp/workspace
