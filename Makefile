@@ -152,7 +152,7 @@ dist/$(VERSION)/$(RELEASE_BIN)_windows_%.tar.gz: bin/$(VERSION)/windows_%/$(RELE
 
 .PHONY: docker docker-login docker-push
 docker: bin/$(VERSION)/linux_amd64/$(RELEASE_BIN)
-	docker build -t $(DOCKER_IMAGE) .
+	docker build --build-arg VERSION=$(VERSION) -t $(DOCKER_IMAGE) .
 docker-login:
 	@if [ -z $(DOCKER_HUB_USERNAME) ]; then echo "DOCKER_HUB_USERNAME environment variable not set"; exit 1; fi
 	@if [ -z $(DOCKER_HUB_ACCESS_TOKEN) ]; then echo "DOCKER_HUB_ACCESS_TOKEN environment variable not set"; exit 1; fi
@@ -167,8 +167,8 @@ release:
 	$(sort $(foreach a, $(OS_ARCHS_MAC), github/$(VERSION)/$(RELEASE_BIN)_$a.tar.gz)) \
 	$(sort $(foreach a, $(OS_ARCHS_WIN), github/$(VERSION)/$(RELEASE_BIN)_$a.tar.gz)) \
 	docker
-	$(MAKE) docker-login
-	$(MAKE) docker-push
+#	$(MAKE) docker-login
+#	$(MAKE) docker-push
 
 .PHONY: github/$(VERSION)/%
 github/$(VERSION)/%: dist/$(VERSION)/% $(CACHE)/$(VERSION)/github-upload-url

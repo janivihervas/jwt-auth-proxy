@@ -2,7 +2,6 @@
 
 # First stage: build the executable.
 FROM alpine:3.10.3 AS builder
-#FROM golang:1.12.5-alpine AS builder
 
 # Create the user and group files that will be used in the running container to
 # run the process as an unprivileged user.
@@ -27,8 +26,10 @@ COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 # Create and own the binary folder
 WORKDIR /app
 
+ARG VERSION
+
 # Copy the prebuilt binary
-COPY bin/linux_amd64/authproxy .
+COPY bin/${VERSION}/linux_amd64/authproxy .
 
 # Perform any further action as an unprivileged user.
 USER nobody:nobody
