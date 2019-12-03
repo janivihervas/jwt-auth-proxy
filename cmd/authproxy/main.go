@@ -76,7 +76,7 @@ func main() {
 		panic(err)
 	}
 
-	err = server.RunHTTP(conf.Port, handlers.LoggingHandler(os.Stdout, m))
+	err = server.RunHTTP(conf.Port, handlers.LoggingHandler(os.Stdout, m), log.New(os.Stdout, "", log.Ldate|log.Ltime|log.LUTC))
 	if err != nil {
 		panic(err)
 	}

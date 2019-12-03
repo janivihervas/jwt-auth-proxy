@@ -54,7 +54,7 @@ func (c *Config) Valid() error {
 		errorMsg += "CallbackPath is empty\n"
 	}
 	if c.CallbackPath == "/" {
-		errorMsg += "CallbackPath is can't be '/'\n"
+		errorMsg += "CallbackPath can't be '/'\n"
 	}
 	if c.AuthClient == nil {
 		errorMsg += "AuthClient is nil\n"

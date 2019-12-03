@@ -3,6 +3,7 @@ package server
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -14,9 +15,9 @@ import (
 )
 
 // RunHTTP server
-func RunHTTP(port string, handler http.Handler) error {
+func RunHTTP(port string, handler http.Handler, logger *log.Logger) error {
 	if port == "" {
-		port = "3000"
+		return errors.New("port is not defined")
 	}
 
 	timeout := time.Second * 15
@@ -29,28 +30,28 @@ func RunHTTP(port string, handler http.Handler) error {
 	}
 
 	quit := make(chan os.Signal)
-	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
+	signal.Notify(quit, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 
 	go func() {
 		s := <-quit
-		log.Printf("Received signal %s, shutting down server\n", s)
+		logger.Printf("Received signal %s, shutting down server\n", s)
 		ctx, cancel := context.WithTimeout(context.Background(), timeout)
 		defer cancel()
 
 		errShutdown := server.Shutdown(ctx)
 		if errShutdown == nil {
-			log.Println("Server shutdown successful")
+			logger.Println("Server shutdown successful")
 			return
 		}
 
-		log.Println("Server shutdown failed, forcing shutdown:", errShutdown)
+		logger.Println("Server shutdown failed, forcing shutdown:", errShutdown)
 		errShutdown = server.Close()
 		if errShutdown != nil {
 			panic(fmt.Sprint("Force shutdown of server failed:", errShutdown))
 		}
 	}()
 
-	log.Println("Starting HTTP server on address", server.Addr)
+	logger.Println("Starting HTTP server on address", server.Addr)
 	err := server.ListenAndServe()
 	if err != http.ErrServerClosed && err != nil {
 		return err
