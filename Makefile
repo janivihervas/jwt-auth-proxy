@@ -1,6 +1,7 @@
 SHELL := /bin/bash
 
 VERSION ?= dev
+COMMIT = $(shell git rev-parse HEAD)
 BRANCH = $(shell git rev-parse --abbrev-ref HEAD)
 TAG ?= $(shell git describe --tags 2>/dev/null)
 
@@ -48,6 +49,7 @@ OS_ARCHS_WIN = $(filter windows_%, $(OS_ARCHS))
 APPS = $(shell ls cmd)
 CACHE := .cache
 mkdir = @mkdir -p $(dir $@)
+GO_BUILD_FLAGS = -trimpath -installsuffix 'static' -ldflags "-X main.version=$(VERSION) main.gitCommit=$(COMMIT) -s -w"
 GO_FILES_NO_TEST = $(shell find . -name "*.go" -not -name "*_test.go")
 MD_FILES = $(shell find . -name "*.md")
 GRAPHVIZ_FILES = $(shell find . -name "*.gv")
@@ -138,7 +140,7 @@ bin_pkg = $(basename $(word 4, $(bin_parts)))
 #   make bin/$(VERSION)/linux_amd64/<app>
 .PRECIOUS: bin/$(VERSION)/%
 bin/$(VERSION)/%: $(GO_FILES_NO_TEST) go.mod go.sum
-	CGO_ENABLED=0 GOOS=$(bin_os) GOARCH=$(bin_arch) go build -trimpath -installsuffix 'static' -ldflags "-X main.version=$(VERSION) -s -w" -o $@ $(PACKAGE)/cmd/$(bin_pkg)
+	CGO_ENABLED=0 GOOS=$(bin_os) GOARCH=$(bin_arch) go build $(GO_BUILD_FLAGS) -o $@ $(PACKAGE)/cmd/$(bin_pkg)
 
 .PRECIOUS: dist/$(VERSION)/$(RELEASE_BIN)_%.tar.gz
 dist/$(VERSION)/$(RELEASE_BIN)_%.tar.gz: bin/$(VERSION)/%/$(RELEASE_BIN)
@@ -167,27 +169,29 @@ release:
 	$(sort $(foreach a, $(OS_ARCHS_MAC), github/$(VERSION)/$(RELEASE_BIN)_$a.tar.gz)) \
 	$(sort $(foreach a, $(OS_ARCHS_WIN), github/$(VERSION)/$(RELEASE_BIN)_$a.tar.gz)) \
 	docker
-#	$(MAKE) docker-login
-#	$(MAKE) docker-push
+	$(MAKE) docker-login
+	$(MAKE) docker-push
 
 .PHONY: github/$(VERSION)/%
 github/$(VERSION)/%: dist/$(VERSION)/% $(CACHE)/$(VERSION)/github-upload-url
 	@if [ -z $(GITHUB_API_USERNAME) ]; then echo "GITHUB_API_USERNAME environment variable not set"; exit 1; fi
 	@if [ -z $(GITHUB_API_TOKEN) ]; then echo "GITHUB_API_TOKEN environment variable not set"; exit 1; fi
-#	@curl --request POST \
-#	--user $(GITHUB_API_USERNAME):$(GITHUB_API_TOKEN) \
-#	--url "$(shell cat $(word 2,$^))?name=$(notdir $<)" \
-#	--header 'content-type: application/gzip' \
-#	--data '@$<'
+	@curl \
+		--request POST \
+		--user $(GITHUB_API_USERNAME):$(GITHUB_API_TOKEN) \
+		--url "$(shell cat $(word 2,$^))?name=$(notdir $<)" \
+		--header 'content-type: application/gzip' \
+		--data '@$<'
 
 $(CACHE)/$(VERSION)/github-upload-url:
 	@if [ -z $(GITHUB_API_USERNAME) ]; then echo "GITHUB_API_USERNAME environment variable not set"; exit 1; fi
 	@if [ -z $(GITHUB_API_TOKEN) ]; then echo "GITHUB_API_TOKEN environment variable not set"; exit 1; fi
 	$(mkdir)
-#	@curl --request GET \
-#    	--url '$(GITHUB_API_URL)/releases/tags/$(VERSION)' \
-#    	--user $(GITHUB_API_USERNAME):$(GITHUB_API_TOKEN) \
-#    	| jq -r '.upload_url' | sed 's|\(.*/assets\){.*}|\1|' > $@
+	@curl \
+		--request GET \
+    	--url '$(GITHUB_API_URL)/releases/tags/$(VERSION)' \
+    	--user $(GITHUB_API_USERNAME):$(GITHUB_API_TOKEN) \
+    	| jq -r '.upload_url' | sed 's|\(.*/assets\){.*}|\1|' > $@
 
 .PHONY: parallelism
 parallelism:
@@ -196,3 +200,6 @@ parallelism:
 .PHONY: version
 version:
 	@echo $(VERSION)
+
+commit:
+	@echo $(COMMIT)

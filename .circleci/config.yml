@@ -26,7 +26,6 @@ jobs:
             sudo apt-get install -y -qq graphviz
             sudo npm install -g prettier markdown-toc
             curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.21.0
-      - run: make parallelism
       - run:
           name: Set build cache keys
           command: |
@@ -115,6 +114,7 @@ jobs:
             mkdir -p /tmp/workspace
             cp -R bin Makefile Dockerfile /tmp/workspace
             make version > /tmp/workspace/VERSION
+            make commit > /tmp/workspace/COMMIT
       - persist_to_workspace:
           root: /tmp/workspace
           paths:
@@ -122,6 +122,7 @@ jobs:
             - Makefile
             - Dockerfile
             - VERSION
+            - COMMIT
 
   release:
     docker:
@@ -135,7 +136,10 @@ jobs:
           name: Copy workspace
           command: |
             cp -R /tmp/workspace/* .
-            export VERSION=$(cat VERSION)
+            VERSION=$(cat VERSION)
+            export VERSION
+            COMMIT=$(cat COMMIT)
+            export COMMIT
       - setup_remote_docker
       - run: make release
 
@@ -147,9 +151,9 @@ workflows:
       - release:
           requires:
             - build
-#          filters:
-#            branches:
-#              only:
-#                - master
-#            tags:
-#              only: /^v.*/
+          filters:
+            branches:
+              only:
+                - master
+            tags:
+              only: /^v.*/
