@@ -130,7 +130,7 @@ jobs:
       - run:
           name: Copy workspace
           command: |
-            cp -R /tmp/workspace .
+            cp -R /tmp/workspace/* .
             export VERSION=$(cat VERSION)
       - setup_remote_docker
       - run: make release
