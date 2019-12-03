@@ -1,6 +1,8 @@
 package main
 
 import (
+	"io/ioutil"
+	"log"
 	"net/http"
 	"testing"
 
@@ -43,7 +45,7 @@ func Test_parseAdditionalParameters(t *testing.T) {
 
 func TestAuthProxy(t *testing.T) {
 	go func() {
-		err := server.RunHTTP("3000", upstream.Echo{})
+		err := server.RunHTTP("3000", upstream.Echo{}, log.New(ioutil.Discard, "", log.LstdFlags))
 		if err != nil {
 			panic(err)
 		}
@@ -52,7 +54,8 @@ func TestAuthProxy(t *testing.T) {
 	var startErr error
 
 	for i := 0; i < 5; i++ {
-		resp, startErr := http.Get("http://localhost:3000/foo")
+		var resp *http.Response
+		resp, startErr = http.Get("http://localhost:3000/foo")
 		if startErr == nil {
 			assert.NoError(t, resp.Body.Close())
 			break
