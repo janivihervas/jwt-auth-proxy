@@ -23,6 +23,7 @@ jobs:
             sudo apt-get update
             sudo apt-get install -y -qq graphviz
             sudo npm install -g prettier markdown-toc
+            curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.21.0
       - run: make parallelism
       - run:
           name: Set build cache keys
