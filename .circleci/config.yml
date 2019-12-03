@@ -138,8 +138,10 @@ jobs:
             cp -R /tmp/workspace/* .
             VERSION=$(cat VERSION)
             export VERSION
+            echo "VERSION = $VERSION"
             COMMIT=$(cat COMMIT)
             export COMMIT
+            echo "COMMIT = $COMMIT"
       - setup_remote_docker
       - run: make release
 
@@ -152,8 +154,5 @@ workflows:
           requires:
             - build
           filters:
-            branches:
-              only:
-                - master
             tags:
               only: /^v.*/
